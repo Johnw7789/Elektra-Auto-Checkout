@@ -20,12 +20,7 @@ func checkStock(monitorData *AmazonMonitorData) (bool, bool) {
 	req.Header.Set("x-api-csrf-token", apitoken)
 	req.Header.Set("Content-Type", contentheader)
 	req.Header.Set("Accept", acceptheader)
-	
-	if monitorData.UserAgent != "" {
-		req.Header.Set("User-Agent", monitorData.UserAgent)
-	} else {
-		req.Header.Set("User-Agent", ua.RandomType(ua.Desktop))
-	}
+	req.Header.Set("User-Agent", monitorData.UserAgent)
 	
 	resp, err := client.Do(req)
 	if err != nil {
@@ -45,7 +40,7 @@ func getApiToken(client *http.Client) string {
   	url := "https://www.amazon.com/gp/aw/d/B00M382RJO" //One of many Amazon product pages that contains an embedded api token
   
 	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36")
+	req.Header.Set("user-agent", monitorData.UserAgent)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -63,7 +58,7 @@ func createSession(client *http.Client) {
 	url := "https://www.amazon.com/gp/aws/cart/add-res.html?Quantity.1=1&OfferListingId.1="
 
 	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36")
+	req.Header.Set("user-agent", monitorData.UserAgent)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -83,11 +78,17 @@ func AmazonMonitorTask(monitorData *AmazonMonitorData) {
 		log.Fatal(err)
 	}
 	
-	createSession(&client)
-	apiToken := getApiToken(&client)
+	var userAgent string
+	
+	if monitorData.UserAgent == "" {
+		monitorData.UserAgent = ua.RandomType(ua.Desktop)
+	}
+	
+	createSession(&client, userAgent)
+	apiToken := getApiToken(&client, userAgent)
 	
 	for {
-		inStock, refreshRequired := checkStock(&client, &monitorData, apiToken)
+		inStock, refreshRequired := checkStock(&client, &monitorData, userAgent)
 		if inStock {
 			return 
 		} else {
