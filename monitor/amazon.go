@@ -1,14 +1,5 @@
 package monitor
 
-var turboHeaders = []string{
-	"Accept: */*", 
-	"Content-Type: application/x-www-form-urlencoded",
-	"x-amz-support-custom-signin: 1",
-  	"x-requested-with: XMLHttpRequest",
-  	"accept-language: en-US,en;q=0.9",
-  	"origin: https://www.amazon.com",
-  	"referer: https://www.amazon.com",
-}
 
 func checkStock() (bool, bool) {
 	acceptheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items/v1\""
