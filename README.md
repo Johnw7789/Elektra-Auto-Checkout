@@ -25,11 +25,16 @@ AmazonMonitorTask(&monitorData)
 log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
 ```
 ###### Starting a checkout instance
-``RetryDelay`` is the amount of time that a checkout task will sleep if there is an error in the checkout flow, before restarting. ``MaxRetries`` is the maximum amount of checkout attempts a checkout task will make before it returns. If the return value is false, the task was unable to complete a successful checkout after every attempt made. If it is true, then the checkout was succesful and ``OrderNum`` should now be populated with the order number. 
+Account ``Cookies`` are needed in order to complete a checkout. You can use cookies from your browser or you can create a session using the Amazon login module (not yet implemented).``RetryDelay`` is the amount of time that a checkout task will sleep if there is an error in the checkout flow, before restarting. ``MaxRetries`` is the maximum amount of checkout attempts a checkout task will make before it returns. If the return value is false, the task was unable to complete a successful checkout after every attempt made. If it is true, then the checkout was succesful and ``OrderNum`` should now be populated with the order number. 
+
+If you would like to use your local IP, you can set ``UseProxies`` to false. Currently only IP authenticated (IP:Port) proxies are supported but support for user/pass authenticated proxies will be coming soon.
 
 ```
 checkoutData := elektra.AmazonCheckoutData{
   UserAgent: "",
+  UseProxies: true,
+  Proxies: ["ip:port", "ip:port"]
+  Cookies: "",
   MaxRetries: 5,
   RetryDelay: 3,
   Sku: "ASIN",
