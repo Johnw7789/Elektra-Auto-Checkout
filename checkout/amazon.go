@@ -33,7 +33,7 @@ func Parse(value string, a string, b string) {
 	return value[posFirstAdjusted:posLast]
 }
 
-func placeOrder() {
+func amazonPlaceOrder() {
 	var data = strings.NewReader(`x-amz-checkout-csrf-token=` + accountSessionId + `&ref_=chk_spc_placeOrder&referrer=spc&pid=` + purchaseId + `&pipelineType=turbo&clientId=retailwebsite&temporaryAddToCart=1&hostPage=detail&weblab=RCX_CHECKOUT_TURBO_DESKTOP_PRIME_87783&isClientTimeBased=1`)
 	req, err := http.NewRequest("POST", "https://www.amazon.com/checkout/spc/place-order?ref_=chk_spc_placeOrder&_srcRID=&clientId=retailwebsite&pipelineType=turbo&cachebuster=&pid=" + purchaseId, data)
 	if err != nil {
@@ -70,7 +70,7 @@ func placeOrder() {
 	return false
 }
 
-func addToCart(client *http.Client) (bool, string, string) {
+func amazonAddToCart(client *http.Client) (bool, string, string) {
 	postData := fmt.Sprintf(`isAsync=1&asin.1=%s&offerListing.1=%s&quantity.1=1`, productId, offerId)
   
 	var data = strings.NewReader(postData)
@@ -106,8 +106,56 @@ func addToCart(client *http.Client) (bool, string, string) {
 	}
 }
 
+func amazonPrepareCart(checkoutData *AmazonCheckoutData) {
+	var data = strings.NewReader(`isAsync=1&addressID=`)
+	req, err := http.NewRequest("POST", "https://www.amazon.com/checkout/turbo-initiate?ref_=chk_detail_eligibility_1-0&referrer=detail&pipelineType=turbo&clientId=retailwebsite&weblab=RCX_CHECKOUT_TURBO_DESKTOP_NONPRIME_87784&checkEligibilityOnly=true&temporaryAddToCart=1", data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req.Header.Set("x-amz-checkout-entry-referer-url", "https://www.amazon.com/dp/" + checkoutData.Sku)
+	req.Header.Set("x-amz-turbo-checkout-dp-url", "https://www.amazon.com/dp/" + checkoutData.Sku)
+	req.Header.Set("x-amz-checkout-csrf-token", checkoutData.SessionId)
+	req.Header.Set("user-agent", checkoutData.UserAgent)
+	req.Header.Set("cookie", checkoutData.Cookies)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+}
+
 
 func AmazonCheckoutTask() {
+	var client *http.Client
+	if checkoutData.UseProxies {
+		rand.Seed(time.Now().Unix())
+		proxy := "http://" + checkoutData.Proxies[rand.Intn(len(checkoutData.Proxies))]
+		
+		client, err = cclient.NewClient(utls.HelloFirefox_Auto, true, proxy) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true, and use a proxy
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		client, err = cclient.NewClient(utls.HelloFirefox_Auto, true) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	
+	for retries := 0, retries < checkoutData.MaxRetries, retries++ {
+		amazonPrepareCart(&client, &checkoutData)
+		cartSuccess, purchaseId, csrfToken := amazonAddToCart(&client, checkoutData)
+		
+		if cartSuccess {
+			success := amazonPlaceOrder(&client, &checkoutData)
+			if success {
+				return true
+			}
+		}
+		time.Sleep(time.Second * time.Interval(checkoutData.RetryDelay))
+	}
+	return false
 }
 
