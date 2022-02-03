@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"github.com/ffeathers/Elektra-Auto-Checkout/checkout"
+	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
 	"fmt"
 	"github.com/wux1an/fake-useragent"
 	"github.com/obito/cclient"
@@ -10,7 +11,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"github.com/ffeathers/Elektra-Auto-Checkout"
 	"strings"
 	"time"
 )
