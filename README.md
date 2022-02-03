@@ -3,7 +3,7 @@ Elektra is designed to automate the process of inventory checking, purchase auto
 
 ## Getting Started
 ###### Checking stock
-If ``UserAgent`` is left empty, a user-agent will be automatically generated for you. ``PollingInterval`` is the delay in seconds for which a monitor will sleep after every stock check
+If ``UserAgent`` is left empty, a user-agent will be automatically generated for you. ``PollingInterval`` is the delay in seconds for which a monitor will sleep after every stock check.
 
 ```  
 monitorData := elektra.AmazonMonitorData{
