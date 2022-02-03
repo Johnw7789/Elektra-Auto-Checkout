@@ -18,4 +18,17 @@ func main() {
   //Do something when in stock
 }
 ```
+###### Starting a checkout instance
 
+func main() {
+  checkoutData := elektra.AmazonCheckoutData{
+    UserAgent: "", //If left empty, a user-agent will be randomly generated for you
+    PollingInterval: 3,
+    Sku: "ASIN",
+    OfferId: "OfferId",
+  }
+  
+  AmazonCheckoutTask(checkoutData) //Checks stock using the designated PollingInterval delay, returns once in stock
+  
+  //Do something when in stock
+}
