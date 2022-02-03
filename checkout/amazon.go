@@ -34,13 +34,13 @@ func Parse(value string, a string, b string) {
 }
 
 func amazonPlaceOrder(client *http.Client, checkoutData *AmazonCheckoutData, purchaseId string, csrfToken string) {
-	var data = strings.NewReader(`x-amz-checkout-csrf-token=` + accountSessionId + `&ref_=chk_spc_placeOrder&referrer=spc&pid=` + purchaseId + `&pipelineType=turbo&clientId=retailwebsite&temporaryAddToCart=1&hostPage=detail&weblab=RCX_CHECKOUT_TURBO_DESKTOP_PRIME_87783&isClientTimeBased=1`)
+	var data = strings.NewReader(fmt.Sprintf(`x-amz-checkout-csrf-token=%s&ref_=chk_spc_placeOrder&referrer=spc&pid=%s&pipelineType=turbo&clientId=retailwebsite&temporaryAddToCart=1&hostPage=detail&weblab=RCX_CHECKOUT_TURBO_DESKTOP_PRIME_87783&isClientTimeBased=1`, checkoutData.SessionId, purchaseId))
 	req, err := http.NewRequest("POST", "https://www.amazon.com/checkout/spc/place-order?ref_=chk_spc_placeOrder&_srcRID=&clientId=retailwebsite&pipelineType=turbo&cachebuster=&pid=" + purchaseId, data)
 	if err != nil {
 		return false
 	}
 	
-	req.Header.Set("x-amz-checkout-entry-referer-url", "https://www.amazon.com/gp/product/" + productId + "/ref=ewc_pr_img_1?smid=AZ5LJ56P0QUDV&psc=1")
+	req.Header.Set("x-amz-checkout-entry-referer-url", "https://www.amazon.com/gp/product/" + checkoutData.Sku)
 	req.Header.Set("anti-csrftoken-a2z", csrfToken)
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36")
 	req.Header.Set("Referer", "https://www.amazon.com/checkout/spc?pid=" + purchaseId + "&pipelineType=turbo&clientId=retailwebsite&temporaryAddToCart=1&hostPage=detail&weblab=RCX_CHECKOUT_TURBO_DESKTOP_PRIME_87783")
@@ -130,7 +130,7 @@ func AmazonCheckoutTask() {
 	var client *http.Client
 	if checkoutData.UseProxies {
 		rand.Seed(time.Now().Unix())
-		proxy := "http://" + checkoutData.Proxies[rand.Intn(len(checkoutData.Proxies))] //Only works with IP authenticated proxies atm
+		proxy := "http://" + checkoutData.Proxies[rand.Intn(len(checkoutData.Proxies))] //Only works with IP authenticated proxies atm (IP:Port), not yet with User:Pass:IP:Port proxies
 		
 		client, err = cclient.NewClient(utls.HelloFirefox_Auto, true, proxy) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true, and use a proxy
 		if err != nil {
@@ -155,8 +155,9 @@ func AmazonCheckoutTask() {
 		cartSuccess, purchaseId, csrfToken := amazonAddToCart(&client, checkoutData)
 		
 		if cartSuccess {
-			success := amazonPlaceOrder(&client, &checkoutData, purchaseId, csrfToken)
+			success, orderNum := amazonPlaceOrder(&client, &checkoutData, purchaseId, csrfToken) //Todo: add ability to fetch order number, currently returns empty string
 			if success {
+				checkoutData.OrderNum = orderNum 
 				return true
 			}
 		}
