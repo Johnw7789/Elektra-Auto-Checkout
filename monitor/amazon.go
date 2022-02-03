@@ -7,7 +7,7 @@ import (
 )
 
 
-func checkStock(monitorData *AmazonMonitorData) (bool, bool) {
+func amazonCheckStock(monitorData *AmazonMonitorData) (bool, bool) {
 	acceptheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items/v1\""
 	contentheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items.request/v1\""
 	
@@ -73,9 +73,20 @@ func createSession(client *http.Client) {
 }
 
 func AmazonMonitorTask(monitorData *AmazonMonitorData) {
-	client, err := cclient.NewClient(utls.HelloFirefox_Auto, true) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true
-	if err != nil {
-		log.Fatal(err)
+	var client *http.Client
+	if monitorData.UseProxies {
+		rand.Seed(time.Now().Unix())
+		proxy := "http://" + monitorData.Proxies[rand.Intn(len(monitorData.Proxies))] //Only works with IP authenticated proxies atm (IP:Port), not yet with User:Pass:IP:Port proxies
+		
+		client, err = cclient.NewClient(utls.HelloFirefox_Auto, true, proxy) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true, and use a proxy
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		client, err = cclient.NewClient(utls.HelloFirefox_Auto, true) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	
 	var userAgent string
@@ -88,7 +99,7 @@ func AmazonMonitorTask(monitorData *AmazonMonitorData) {
 	apiToken := getApiToken(&client, userAgent)
 	
 	for {
-		inStock, refreshRequired := checkStock(&client, &monitorData, userAgent)
+		inStock, refreshRequired := amazonCheckStock(&client, &monitorData, userAgent)
 		if inStock {
 			return 
 		} else {
