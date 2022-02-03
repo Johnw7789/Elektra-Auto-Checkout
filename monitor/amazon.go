@@ -10,6 +10,34 @@ var turboHeaders = []string{
   	"referer: https://www.amazon.com",
 }
 
+func checkStock() (bool, bool) {
+	acceptheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items/v1\""
+	contentheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items.request/v1\""
+	
+	var data = strings.NewReader(`{"items":[{"asin":"` + productId + `","offerListingId":"` + offerId + `","quantity":1}]}`)
+	req, err := http.NewRequest("POST", "https://data.amazon.com/api/marketplaces/ATVPDKIKX0DER/cart/carts/retail/items", data)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	req.Header.Set("x-api-csrf-token", apitoken)
+	req.Header.Set("Content-Type", contentheader)
+	req.Header.Set("Accept", acceptheader)
+	req.Header.Set("User-Agent", "Bestbuy-mApp/202104201730 CFNetwork/1209 Darwin/20.2.0")
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	if resp.StatusCode == 200 {
+		return true, false //In stock
+	} else if resp.StatusCode == 404 {
+		return false, true //Out of stock, but an api token refresh is required 
+	} 
+	
+	return false, false //Out of stock and an api token refresh is not required
+}
 
 func getApiToken() {
   	url := "https://www.amazon.com/gp/aw/d/B00M382RJO" //One of many Amazon product pages that contains an embedded api token
