@@ -18,7 +18,7 @@ AmazonMonitorTask(monitorData)
 log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
 ```
 ###### Starting a checkout instance
-``MaxRetries`` is the maximum amount of attempts a checkout task will make before it returns. If it is true, then the checkout was succesful and ``OrderNum`` should now be populated with the order number. If the return value is false, the task was unable to complete a successful checkout after every attempt made. ``RetryDelay`` is the amount of time that a checkout task will sleep if there is an error in the checkout flow, before restarting. Once it restarts, it will use up a checkotu attempt. 
+``RetryDelay`` is the amount of time that a checkout task will sleep if there is an error in the checkout flow, before restarting. ``MaxRetries`` is the maximum amount of attempts a checkout task will make before it returns. If the return value is false, the task was unable to complete a successful checkout after every attempt made. Once it restarts, it will use up a checkotu attempt. If it is true, then the checkout was succesful and ``OrderNum`` should now be populated with the order number. 
 
 ```
 checkoutData := elektra.AmazonCheckoutData{
