@@ -15,7 +15,7 @@ monitorData := elektra.AmazonMonitorData{
   
 AmazonMonitorTask(monitorData) 
   
-//Do something when in stock
+log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
 ```
 ###### Starting a checkout instance
 
