@@ -5,13 +5,12 @@ Elektra is designed to automate the process of inventory checking, purchasing it
 Amazon is the first of many sites to come. Expect weekly additions, though some sites may only receive login and monitor modules and not full fledged checkout.
 
 ## Installation
-```
-go get github.com/ffeathers/Elektra-Auto-Checkout
+``go get github.com/ffeathers/Elektra-Auto-Checkout``
 
-go mod init
+``go mod init``
 
-go mod tidy
-```
+``go mod tidy``
+
 
 ## Getting Started
 Below is some example usage of the Amazon module. You can find additional examples for other sites in the [examples]() directory.
