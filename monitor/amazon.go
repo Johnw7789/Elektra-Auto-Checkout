@@ -77,7 +77,7 @@ func createSession(client *http.Client) {
 	return string(sessionid)*/
 }
 
-func Amazon(monitorData *AmazonMonitorData) {
+func AmazonMonitorTask(monitorData *AmazonMonitorData) {
 	client, err := cclient.NewClient(utls.HelloFirefox_Auto, true) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true
 	if err != nil {
 		log.Fatal(err)
