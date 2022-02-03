@@ -53,7 +53,7 @@ func getApiToken(client *http.Client, monitorData *elektra.AmazonMonitorData) st
 
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer resp.Body.Close()
 
@@ -71,7 +71,7 @@ func createSession(client *http.Client, monitorData *elektra.AmazonMonitorData) 
 
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer resp.Body.Close()
 
