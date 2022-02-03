@@ -1,5 +1,10 @@
 package monitor
 
+import (
+	"github.com/obito/cclient"
+	utls "github.com/refraction-networking/utls"
+)
+
 
 func checkStock() (bool, bool) {
 	acceptheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items/v1\""
