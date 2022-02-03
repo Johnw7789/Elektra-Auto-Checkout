@@ -7,6 +7,7 @@ Elektra is designed to automate the process of inventory checking, purchase auto
 ```
 func main() {
   monitorData := elektra.AmazonMonitorData{
+    UserAgent: "", //If left empty, a user-agent will be randomly generated for you
     PollingInterval: 3,
     Sku: "ASIN",
     OfferId: "OfferId",
