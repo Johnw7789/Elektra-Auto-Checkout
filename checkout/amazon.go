@@ -1,5 +1,10 @@
 package checkout
 
+import (
+	"github.com/obito/cclient"
+	utls "github.com/refraction-networking/utls"
+)
+
 var turboHeaders = []string{
 	"Accept: */*", 
 	"Content-Type: application/x-www-form-urlencoded",
