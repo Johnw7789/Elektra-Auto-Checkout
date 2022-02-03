@@ -2,8 +2,8 @@
 Elektra is designed to automate the process of inventory checking, purchase automation, and automated logins for various commercial and retail sites.
 
 ## Getting Started
-###### Checking inventory
-If UserAgent is left empty, a user-agent will be automatically generated for you.
+###### Checking stock
+If UserAgent is left empty, a user-agent will be automatically generated for you. PollingInterval is the delay in seconds for which a monitor will sleep after every stock check
 
 ```  
 monitorData := elektra.AmazonMonitorData{
