@@ -1,5 +1,5 @@
 package monitor
 
-func Bestbuy() {
+func BestbuyMonitorTask() {
 
 }
