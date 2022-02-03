@@ -1,7 +1,7 @@
 package monitor
 
 import (
-	"elektra/checkout"
+	"github.com/ffeathers/Elektra-Auto-Checkout/checkout"
 	"fmt"
 	"github.com/wux1an/fake-useragent"
 	"github.com/obito/cclient"
