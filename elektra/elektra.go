@@ -93,6 +93,8 @@ func CreateClient(useProxies bool, proxies []string) *http.Client {
 		if err != nil {
 			log.Fatal(err)
 		}
+		
+		log.Println("Created client")
 
 		return &client
 	} else {
@@ -100,6 +102,8 @@ func CreateClient(useProxies bool, proxies []string) *http.Client {
 		if err != nil {
 			log.Fatal(err)
 		}
+		
+		log.Println("Created client")
 
 		return &client
 	}
