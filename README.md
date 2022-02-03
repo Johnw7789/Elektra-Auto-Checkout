@@ -1,7 +1,11 @@
+# Elektra
 ## About This Project
 Elektra is designed to automate the process of inventory checking, purchasing items, and generating account login sessions for various commercial and retail sites.
 
 Amazon is the first of many sites to come. Expect weekly additions, though some sites may only receive login and monitor modules and not full fledged checkout.
+
+## Installation
+``go get github.com/ffeathers/Elektra-Auto-Checkout``
 
 ## Getting Started
 ###### Checking stock
