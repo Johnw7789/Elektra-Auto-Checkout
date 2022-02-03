@@ -104,10 +104,14 @@ func AmazonMonitorTask(monitorData *elektra.AmazonMonitorData) {
 		monitorData.UserAgent = ua.RandomType(ua.Desktop)
 	}
 	
+	log.Println("Creating Session")
 	createSession(client, monitorData)
+	
+	log.Println("Getting API Token")
 	apiToken := getApiToken(client, monitorData)
 	
 	for {
+		log.Println("Checking Stock")
 		inStock, refreshRequired := amazonCheckStock(client, monitorData, apiToken)
 		if inStock {
 			return 
