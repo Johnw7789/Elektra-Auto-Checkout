@@ -1,6 +1,8 @@
 ## About This Project
 Elektra is designed to automate the process of inventory checking, purchasing items, and generating account login sessions for various commercial and retail sites.
 
+Amazon is the first of many sites to come. Expect weekly additions, though some sites may only receive login and monitor modules and not full fledged checkout.
+
 ## Getting Started
 ###### Checking stock
 If ``UserAgent`` is left empty, a user-agent will be automatically generated for you. ``PollingInterval`` is the delay in seconds for which a monitor will sleep after every stock check. Once a monitor task is started, it will continue to monitor indefinitely until stock is detected.
