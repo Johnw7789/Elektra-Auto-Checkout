@@ -13,7 +13,7 @@ monitorData := elektra.AmazonMonitorData{
   OfferId: "OfferId",
 }
   
-AmazonMonitorTask(monitorData) //Checks stock using the designated PollingInterval delay, returns once in stock
+AmazonMonitorTask(monitorData) 
   
 //Do something when in stock
 ```
@@ -27,7 +27,7 @@ checkoutData := elektra.AmazonCheckoutData{
   OfferId: "OfferId",
 }
   
-AmazonCheckoutTask(checkoutData) //Checks stock using the designated PollingInterval delay, returns once in stock
+AmazonCheckoutTask(checkoutData) 
   
 //Do something when in stock
 ```
