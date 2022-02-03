@@ -35,6 +35,8 @@ type AmazonMonitorData struct {
 type AmazonCheckoutData struct {
 	UserAgent  string
 	RetryDelay int
+	SessionId  string
+	Cookies    string
 	Sku        string
 	OfferId    string
 	OrderNum   string
