@@ -26,9 +26,18 @@ type AccountData struct {
 }
 
 type AmazonMonitorData struct {
-	Delay   int
-	Sku     string
-	Offerid string
+	UserAgent string
+	Delay     int
+	Sku       string
+	OfferId   string
+}
+
+type AmazonCheckoutData struct {
+	UserAgent  string
+	RetryDelay int
+	Sku        string
+	OfferId    string
+	OrderNum   string
 }
 
 type BestbuyMonitorData struct {
@@ -41,9 +50,3 @@ type NeweggMonitorData struct {
 	Sku     string
 }
 
-type AmazonCheckoutData struct {
-	RetryDelay int
-	Sku        string
-	Offerid    string
-	OrderNum   string
-}
