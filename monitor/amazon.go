@@ -11,7 +11,7 @@ func checkStock(monitorData *AmazonMonitorData) (bool, bool) {
 	acceptheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items/v1\""
 	contentheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items.request/v1\""
 	
-	var data = strings.NewReader(`{"items":[{"asin":"` + monitorData.Sku + `","offerListingId":"` + monitorData.OfferId + `","quantity":1}]}`)
+	var data = strings.NewReader(fmt.Sprintf(`{"items":[{"asin":"%s","offerListingId":"%s","quantity":1}]}`, monitorData.Sku, monitorData.OfferId))
 	req, err := http.NewRequest("POST", "https://data.amazon.com/api/marketplaces/ATVPDKIKX0DER/cart/carts/retail/items", data)
 	if err != nil {
 		log.Fatal(err)
