@@ -10,7 +10,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"elektra"
+	"github.com/ffeathers/Elektra-Auto-Checkout"
 	"strings"
 	"time"
 )
