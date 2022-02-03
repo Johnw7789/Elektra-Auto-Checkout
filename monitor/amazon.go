@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"github.com/wux1an/fake-useragent"
 	"github.com/obito/cclient"
 	utls "github.com/refraction-networking/utls"
 )
@@ -23,7 +24,7 @@ func checkStock(monitorData *AmazonMonitorData) (bool, bool) {
 	if monitorData.UserAgent != "" {
 		req.Header.Set("User-Agent", monitorData.UserAgent)
 	} else {
-		req.Header.Set("User-Agent", elektra.GetRandomUserAgent())
+		req.Header.Set("User-Agent", ua.RandomType(ua.Desktop))
 	}
 	
 	resp, err := client.Do(req)
