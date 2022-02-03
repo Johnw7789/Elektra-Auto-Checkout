@@ -35,3 +35,6 @@ if orderSuccess {
   log.Println("Checkout successful | order number: " + checkoutData.OrderNum)
 }
 ```
+
+## License
+https://choosealicense.com/licenses/mit/
