@@ -20,12 +20,14 @@ If ``UserAgent`` is left empty, a user-agent will be automatically generated for
 ```  
 monitorData := elektra.AmazonMonitorData{
   UserAgent: "", 
+  UseProxies: true,
+  Proxies: ["IP:Port", "IP:Port"]
   PollingInterval: 3,
   Sku: "ASIN",
   OfferId: "OfferId",
 }
   
-monitor.AmazonMonitorTask(monitorData) 
+monitor.AmazonMonitorTask(&monitorData) 
   
 log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
 ```
@@ -46,7 +48,7 @@ checkoutData := elektra.AmazonCheckoutData{
   OfferId: "OfferId",
 }
   
-orderSuccess := checkout.AmazonCheckoutTask(checkoutData) 
+orderSuccess := checkout.AmazonCheckoutTask(&checkoutData) 
 if orderSuccess {
   log.Println("Checkout successful | order number: " + checkoutData.OrderNum)
 }
