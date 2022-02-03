@@ -8,9 +8,9 @@ Elektra is designed to automate the process of inventory checking, purchase auto
 ```
 func main() {
   monitorData := elektra.AmazonMonitorData{
-    "": "",
-    "": "",
-    "": "",
+    PollingInterval: 3,
+    Sku: "ASIN",
+    OfferId: "OfferId",
   }
   
   AmazonMonitorTask(monitorData) //Checks stock using the designated PollingInterval delay, returns once in stock
