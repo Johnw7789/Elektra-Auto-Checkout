@@ -6,11 +6,11 @@ import (
 )
 
 
-func checkStock() (bool, bool) {
+func checkStock(monitorData *AmazonMonitorData) (bool, bool) {
 	acceptheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items/v1\""
 	contentheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items.request/v1\""
 	
-	var data = strings.NewReader(`{"items":[{"asin":"` + productId + `","offerListingId":"` + offerId + `","quantity":1}]}`)
+	var data = strings.NewReader(`{"items":[{"asin":"` + monitorData.Sku + `","offerListingId":"` + monitorData.Offerid + `","quantity":1}]}`)
 	req, err := http.NewRequest("POST", "https://data.amazon.com/api/marketplaces/ATVPDKIKX0DER/cart/carts/retail/items", data)
 	if err != nil {
 		log.Fatal(err)
@@ -19,7 +19,12 @@ func checkStock() (bool, bool) {
 	req.Header.Set("x-api-csrf-token", apitoken)
 	req.Header.Set("Content-Type", contentheader)
 	req.Header.Set("Accept", acceptheader)
-	req.Header.Set("User-Agent", "Bestbuy-mApp/202104201730 CFNetwork/1209 Darwin/20.2.0")
+	
+	if monitorData.UserAgent != "" {
+		req.Header.Set("User-Agent", monitorData.UserAgent)
+	} else {
+		req.Header.Set("User-Agent", elektra.GetRandomUserAgent())
+	}
 	
 	resp, err := client.Do(req)
 	if err != nil {
@@ -71,7 +76,7 @@ func createSession(client *http.Client) {
 	return string(sessionid)*/
 }
 
-func Amazon() {
+func Amazon(monitorData *AmazonMonitorData) {
 	client, err := cclient.NewClient(utls.HelloFirefox_Auto, true) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true
 	if err != nil {
 		log.Fatal(err)
@@ -81,7 +86,7 @@ func Amazon() {
 	apiToken := getApiToken(&client)
 	
 	for {
-		inStock, refreshRequired := checkStock(&client, apiToken)
+		inStock, refreshRequired := checkStock(&client, &monitorData, apiToken)
 		if inStock {
 			return 
 		} else {
@@ -90,6 +95,6 @@ func Amazon() {
 			}
 		}
 		
-		time.Sleep(time.Second * time.Interval())
+		time.Sleep(time.Second * time.Interval(monitorData.Delay))
 	}
 }
