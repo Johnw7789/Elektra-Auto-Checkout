@@ -20,7 +20,7 @@ monitorData := elektra.AmazonMonitorData{
   OfferId: "OfferId",
 }
   
-AmazonMonitorTask(&monitorData) 
+monitor.AmazonMonitorTask(&monitorData) 
   
 log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
 ```
@@ -41,7 +41,7 @@ checkoutData := elektra.AmazonCheckoutData{
   OfferId: "OfferId",
 }
   
-orderSuccess := AmazonCheckoutTask(&checkoutData) 
+orderSuccess := checkout.AmazonCheckoutTask(&checkoutData) 
 if orderSuccess {
   log.Println("Checkout successful | order number: " + checkoutData.OrderNum)
 }
