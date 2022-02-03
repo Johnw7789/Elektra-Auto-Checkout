@@ -1,4 +1,4 @@
-module elektra
+module github.com/ffeathers/Elektra-Auto-Checkout
 
 go 1.17
 
