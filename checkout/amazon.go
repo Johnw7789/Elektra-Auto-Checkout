@@ -107,7 +107,7 @@ func addToCart(client *http.Client) (bool, string, string) {
 }
 
 
-func AmazonCheckouTask() {
+func AmazonCheckoutTask() {
 	
 }
 
