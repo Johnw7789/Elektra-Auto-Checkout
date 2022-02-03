@@ -19,7 +19,7 @@ If ``UserAgent`` is left empty, a user-agent will be automatically generated for
 monitorData := elektra.AmazonMonitorData{
   UserAgent: "", 
   UseProxies: true,
-  Proxies: ["IP:Port", "IP:Port"]
+  Proxies: []string{"IP:Port", "IP:Port"},
   PollingInterval: 3,
   Sku: "ASIN",
   OfferId: "OfferId",
@@ -38,7 +38,7 @@ If you would like to use your local IP, you can set ``UseProxies`` to false. Cur
 checkoutData := elektra.AmazonCheckoutData{
   UserAgent: "",
   UseProxies: true,
-  Proxies: ["ip:port", "ip:port"]
+  Proxies: []string{"IP:Port", "IP:Port"},
   Cookies: "",
   MaxRetries: 5,
   RetryDelay: 3,
