@@ -1,1 +1,5 @@
+package examples
 
+func Bestbuy() {
+
+}
