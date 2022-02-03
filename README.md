@@ -1,5 +1,5 @@
 ## About This Project
-Elektra is designed to automate the process of inventory checking, purchase automation, and automated logins for various commercial and retail sites.
+Elektra is designed to automate the process of inventory checking, purchasing items, and generating account login sessions for various commercial and retail sites.
 
 ## Getting Started
 ###### Checking stock
