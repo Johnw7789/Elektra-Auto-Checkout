@@ -1,5 +1,0 @@
-package login
-
-func Amazon() {
-
-}
