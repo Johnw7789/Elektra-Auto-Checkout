@@ -26,17 +26,21 @@ type AccountData struct {
 }
 
 type AmazonMonitorData struct {
-	UserAgent string
-	Delay     int
-	Sku       string
-	OfferId   string
+	UserAgent  string
+	Proxies    []string
+	UseProxies bool
+	Delay      int
+	Sku        string
+	OfferId    string
 }
 
 type AmazonCheckoutData struct {
 	UserAgent  string
-	RetryDelay int
 	SessionId  string
 	Cookies    string
+	Proxies    []string
+	UseProxies bool
+	RetryDelay int
 	Sku        string
 	OfferId    string
 	OrderNum   string
