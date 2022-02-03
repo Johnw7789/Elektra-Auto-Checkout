@@ -7,6 +7,7 @@ Amazon is the first of many sites to come. Expect weekly additions, though some 
 ## Installation
 ``go get github.com/ffeathers/Elektra-Auto-Checkout``
 
+Use ``go mod tidy`` if issues arrive with some of Elektra's imported modules.
 
 ## Getting Started
 Below is some example usage of the Amazon module. You can find additional examples for other sites in the [examples]() directory.
