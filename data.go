@@ -19,28 +19,30 @@ type BillingData struct {
 }
 
 type AccountData struct {
-	Site     string
 	Username string
 	Password string
 	Email    string
 	Phone    string
 }
 
-type Account struct {
-	Site    string
-	Cookies string
-}
-
-type MonitorData struct {
+type AmazonMonitorData struct {
 	Delay   int
-	Site    string
 	Sku     string
 	Offerid string
 }
 
-type CheckoutData struct {
+type BestbuyMonitorData struct {
+	Delay   int
+	Sku     string
+}
+
+type NeweggMonitorData struct {
+	Delay   int
+	Sku     string
+}
+
+type AmazonCheckoutData struct {
 	RetryDelay int
-	Site       string
 	Sku        string
 	Offerid    string
 	OrderNum   string
