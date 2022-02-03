@@ -33,7 +33,6 @@ checkoutData := elektra.AmazonCheckoutData{
   RetryDelay: 3,
   Sku: "ASIN",
   OfferId: "OfferId",
-  OrderNum: "",
 }
   
 orderSuccess := AmazonCheckoutTask(&checkoutData) 
