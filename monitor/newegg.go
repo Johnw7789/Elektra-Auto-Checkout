@@ -1,0 +1,5 @@
+package monitor
+
+func Newegg() {
+
+}
