@@ -53,9 +53,15 @@ func placeOrder() {
 		}
 	}
 	
-	if 
+	bodyText, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 	
-	fmt.Println(fmt.Sprintf("[%s] [Amazon Turbo V2] [SKU %s] %s", time.Now().Format("15:04:05"), productId, red("Order Failed")))
+	if strings.Contains(string(bodyText), "thankyou") {
+		return true
+	}
+	
 	return false
 }
 
