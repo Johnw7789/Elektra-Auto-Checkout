@@ -22,12 +22,15 @@ AmazonMonitorTask(monitorData)
 ```
 checkoutData := elektra.AmazonCheckoutData{
   UserAgent: "", //If left empty, a user-agent will be randomly generated for you
-  PollingInterval: 3,
+  MaxRetries: 5,
+  RetryDelay: 3,
   Sku: "ASIN",
   OfferId: "OfferId",
+  OrderNum: "",
 }
   
-AmazonCheckoutTask(checkoutData) 
-  
-//Do something when in stock
+orderSuccess := AmazonCheckoutTask(checkoutData) 
+if orderSuccess {
+  log.Println("Checkout successful | order number: " + checkoutData.OrderNum)
+}
 ```
