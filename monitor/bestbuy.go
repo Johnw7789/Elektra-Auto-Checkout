@@ -1,5 +1,16 @@
 package monitor
 
+import (
+	"fmt"
+	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
+	ua "github.com/wux1an/fake-useragent"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"strings"
+	"time"
+)
+
 func bestbuyCheckStock(client *http.Client, monitorData *elektra.BestbuyMonitorData) bool {
   	req, err := http.NewRequest("GET", "https://www.bestbuy.com/button-state/api/v5/button-state?skus=" + monitorData.Sku + "&context=pdp&source=buttonView", nil)
 	if err != nil {
