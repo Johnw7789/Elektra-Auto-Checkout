@@ -18,6 +18,10 @@ This project is not intended for resellers. This is a project for educational pu
 | target.com | | ||
 | walmart.com || | |
 
+* Add notifications module (Discord, Slack, Twilio)
+* Add auth code fetcher (imap + Gmail)
+* Add account generators
+
 ## Installation
 ##### Requires Go 1.7
 ``go get github.com/ffeathers/Elektra-Auto-Checkout``
