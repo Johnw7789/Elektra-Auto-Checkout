@@ -66,6 +66,14 @@ type BestbuyMonitorData struct {
 }
 
 type NeweggMonitorData struct {
+	UserAgent       string
+	Proxies         []string
+	UseProxies      bool
+	PollingInterval int
+	Sku             string
+}
+
+type NeweggMonitorData struct {
 	Delay int
 	Sku   string
 }
