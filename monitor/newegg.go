@@ -30,7 +30,7 @@ func neweggCheckStock(client *http.Client, monitorData *elektra.NeweggMonitorDat
   	return false
 }
 
-func NeweggMonitorTask((monitorData *elektra.NeweggMonitorData) {
+func NeweggMonitorTask(monitorData *elektra.NeweggMonitorData) {
 	client := elektra.CreateClient(monitorData.UseProxies, monitorData.Proxies)
  
 	if monitorData.UserAgent == "" {
