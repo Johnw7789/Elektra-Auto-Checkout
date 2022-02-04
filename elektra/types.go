@@ -62,8 +62,3 @@ type NeweggMonitorData struct {
 	PollingInterval int
 	Sku             string
 }
-
-type NeweggMonitorData struct {
-	Delay int
-	Sku   string
-}
