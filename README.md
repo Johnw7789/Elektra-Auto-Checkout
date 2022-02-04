@@ -9,7 +9,7 @@ This project is not intended for resellers. This is a project for educational pu
 
 ## Progress / Roadmap
 
-| **Site** | **Login** | **Monitor** | *Checkout** |
+| **Site** | **Login** | **Monitor** | **Checkout** |
 |:---:|:---:|:---:|:---:|
 | amazon.com | |✔ |`✔`|
 | bestbuy.com ||`✔`| |
