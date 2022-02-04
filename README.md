@@ -7,6 +7,17 @@ Amazon is the first of many sites to come. Expect weekly additions, though some 
 ## Note
 This project is not intended for resellers. This is a project for educational purposes / experimentation / to help others get an item which they may need.
 
+## Progress / Roadmap
+
+| **Site** | **Login** | **Monitor** | *Checkout** |
+|:---:|:---:|:---:|:---:|
+| amazon.com | |✔ |`✔`|
+| bestbuy.com |``|`✔`| |
+| newegg.com |``|`✔`| |
+| evga.com |``|``| |
+| target.com |``| |``|
+| walmart.com |``| | |
+
 ## Installation
 ##### Requires Go 1.7
 ``go get github.com/ffeathers/Elektra-Auto-Checkout``
@@ -15,6 +26,7 @@ Use ``go mod tidy`` if issues arise with some of Elektra's imported modules.
 
 ## Getting Started
 Below is some example usage of the Amazon module. You can find additional examples for other sites in the [examples](https://github.com/ffeathers/Elektra-Auto-Checkout/tree/main/examples) folder.
+
 ###### Checking stock
 If ``UserAgent`` is left empty, a user-agent will be automatically generated for you. ``PollingInterval`` is the delay in seconds for which a monitor will sleep after every stock check. Once a monitor task is started, it will continue to monitor indefinitely until stock is detected.
 
