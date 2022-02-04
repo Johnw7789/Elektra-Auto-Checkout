@@ -12,7 +12,7 @@ func main() {
 		UserAgent:       "",
 		UseProxies:      false,
 		PollingInterval: 3,
-		Sku:             "B0873C4C67",
+		Sku:             "5457800",
 	}
 
 	monitor.BestbuyMonitorTask(&monitorData)
