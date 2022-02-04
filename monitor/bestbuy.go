@@ -1,7 +1,7 @@
 package monitor
 
 func bestbuyCheckStock(client *http.Client, monitorData *elektra.BestbuyMonitorData) bool {
-  req, err := http.NewRequest("GET", "https://www.bestbuy.com/button-state/api/v5/button-state?skus=" + monitorData.Sku + "&context=pdp&source=buttonView", nil)
+  	req, err := http.NewRequest("GET", "https://www.bestbuy.com/button-state/api/v5/button-state?skus=" + monitorData.Sku + "&context=pdp&source=buttonView", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -17,31 +17,31 @@ func bestbuyCheckStock(client *http.Client, monitorData *elektra.BestbuyMonitorD
 		log.Fatal(err)
 	}
   
-  if resp.StatusCode == 200 {
-    bodyText, _ := ioutil.ReadAll(resp.Body)
-    if strings.Contains(string(bodyText), "CHECK_STORES") || strings.Contains(string(bodyText), "ADD_TO_CART") {
-      return true
-    }
-  } else {
-    log.Println(fmt.Sprintf("Status Code: %d", resp.StatusCode))
-  }
+	if resp.StatusCode == 200 {
+    		bodyText, _ := ioutil.ReadAll(resp.Body)
+    		if strings.Contains(string(bodyText), "CHECK_STORES") || strings.Contains(string(bodyText), "ADD_TO_CART") {
+      			return true
+		}
+  	} else {
+   		 log.Println(fmt.Sprintf("Status Code: %d", resp.StatusCode))
+  	}
   
-  return false
+  	return false
 }
 
 func BestbuyMonitorTask((monitorData *elektra.BestbuyMonitorData) {
-  client := elektra.CreateClient(monitorData.UseProxies, monitorData.Proxies)
+	client := elektra.CreateClient(monitorData.UseProxies, monitorData.Proxies)
  
-  if monitorData.UserAgent == "" {
-    monitorData.UserAgent = ua.RandomType(ua.Desktop)
-  }
+	if monitorData.UserAgent == "" {
+		monitorData.UserAgent = ua.RandomType(ua.Desktop)
+	}
   
-  for {
-    log.Println("Checking Stock")
+	for {
+		log.Println("Checking Stock")
 		inStock := bestbuyCheckStock(client, monitorData)
 		if inStock {
-      return
-    }
+			return
+		}
 
 		time.Sleep(time.Second * time.Duration(monitorData.PollingInterval))
 	}
