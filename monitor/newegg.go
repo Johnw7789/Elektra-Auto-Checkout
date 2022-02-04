@@ -20,7 +20,7 @@ func neweggCheckStock(client *http.Client, monitorData *elektra.NeweggMonitorDat
 	req.Header.Set("user-agent", monitorData.UserAgent)
 	req.Header.Set("accept", "*/*")
 
-	resp, err := client.Do(req)
+	_, err = client.Do(req)
 	if err != nil {
 		log.Fatal(err)
 	}
