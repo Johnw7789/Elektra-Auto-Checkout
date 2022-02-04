@@ -40,7 +40,6 @@ type AmazonMonitorData struct {
 	Proxies         []string
 	UseProxies      bool
 	PollingInterval int
-	Delay           int
 	Sku             string
 	OfferId         string
 }
@@ -59,8 +58,11 @@ type AmazonCheckoutData struct {
 }
 
 type BestbuyMonitorData struct {
-	Delay int
-	Sku   string
+	UserAgent       string
+	Proxies         []string
+	UseProxies      bool
+	PollingInterval int
+	Sku             string
 }
 
 type NeweggMonitorData struct {
