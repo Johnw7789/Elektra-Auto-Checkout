@@ -18,7 +18,7 @@ func bestbuyCheckStock(client *http.Client, monitorData *elektra.BestbuyMonitorD
 	}
 	req.Header.Set("authority", "www.bestbuy.com")
 	req.Header.Set("host", "www.bestbuy.com")
-	req.Header.Set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.64")
+	req.Header.Set("user-agent", monitorData.UserAgent)
 	req.Header.Set("accept", "*/*")
 	req.Header.Set("x-client-id", "FRV")
 	req.Header.Set("Connection", "keep-alive")
