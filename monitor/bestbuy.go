@@ -40,7 +40,7 @@ func bestbuyCheckStock(client *http.Client, monitorData *elektra.BestbuyMonitorD
   	return false
 }
 
-func BestbuyMonitorTask((monitorData *elektra.BestbuyMonitorData) {
+func BestbuyMonitorTask(monitorData *elektra.BestbuyMonitorData) {
 	client := elektra.CreateClient(monitorData.UseProxies, monitorData.Proxies)
  
 	if monitorData.UserAgent == "" {
