@@ -5,6 +5,7 @@ Elektra is designed to automate the process of inventory checking, purchasing it
 Amazon is the first of many sites to come. Expect weekly additions, though some sites may only receive login and monitor modules and not full fledged checkout.
 
 ## Installation
+##### Requires Go 1.7
 ``go get github.com/ffeathers/Elektra-Auto-Checkout``
 
 Use ``go mod tidy`` if issues arrive with some of Elektra's imported modules.
