@@ -12,7 +12,7 @@ import (
 )
 
 func neweggCheckStock(client *http.Client, monitorData *elektra.NeweggMonitorData) bool {
-  	req , err := http.NewRequest("GET", "https://www.newegg.com/product/api/ProductRealtime?ItemNumber=" + productId, nil)
+  	req , err := http.NewRequest("GET", "https://www.newegg.com/product/api/ProductRealtime?ItemNumber=" + monitorData.Sku, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
