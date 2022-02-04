@@ -1,5 +1,5 @@
 package login
 
-func Amazon() {
+func AmazonLoginSession() {
 
 }
