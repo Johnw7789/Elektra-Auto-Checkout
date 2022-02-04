@@ -1,13 +1,13 @@
 package monitor
 
 import (
-	"fmt"
+	//"fmt"
 	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
 	ua "github.com/wux1an/fake-useragent"
-	"io/ioutil"
+	//"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
+	//"strings"
 	"time"
 )
 
@@ -17,7 +17,7 @@ func neweggCheckStock(client *http.Client, monitorData *elektra.NeweggMonitorDat
 		log.Fatal(err)
 	}
 	
-	req.Header.Set("user-agent", monitorDataUserAgent)
+	req.Header.Set("user-agent", monitorData.UserAgent)
 	req.Header.Set("accept", "*/*")
 
 	resp, err := client.Do(req)
