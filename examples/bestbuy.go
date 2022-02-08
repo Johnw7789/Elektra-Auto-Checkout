@@ -8,14 +8,21 @@ import (
 )
 
 func main() {
-	monitorData := elektra.BestbuyMonitorData{
+	monitor := monitor.BestbuyMonitor{
 		UserAgent:       "",
-		UseProxies:      false,
+		Proxy:           "",
 		PollingInterval: 3,
 		Sku:             "5457800",
 	}
 
-	monitor.BestbuyMonitorTask(&monitorData)
-
-	log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
+	banned, err := monitor.BestbuyMonitorTask()
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	if banned {
+		log.Println(fmt.Sprintf("Your IP is flagged", monitorData.Sku))
+	} else {
+		log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
+	}
 }
