@@ -11,49 +11,64 @@ import (
 	"time"
 )
 
-func bestbuyCheckStock(client *http.Client, monitorData *elektra.BestbuyMonitorData) bool {
-  	req, err := http.NewRequest("GET", "https://www.bestbuy.com/button-state/api/v5/button-state?skus=" + monitorData.Sku + "&context=pdp&source=buttonView", nil)
+type BestbuyMonitor struct {
+	UserAgent       string
+	Proxy           string
+	PollingInterval int
+	Sku             string
+}
+
+func (monitor *BestbuyMonitor) bestbuyCheckStock(client *http.Client) (bool, bool, error) {
+  	req, err := http.NewRequest("GET", "https://www.bestbuy.com/button-state/api/v5/button-state?skus=" + monitor.Sku + "&context=pdp&source=buttonView", nil)
 	if err != nil {
-		log.Fatal(err)
+		return false, false, nil
 	}
 	req.Header.Set("authority", "www.bestbuy.com")
 	req.Header.Set("host", "www.bestbuy.com")
-	req.Header.Set("user-agent", monitorData.UserAgent)
+	req.Header.Set("user-agent", monitor.UserAgent)
 	req.Header.Set("accept", "*/*")
 	req.Header.Set("x-client-id", "FRV")
 	req.Header.Set("Connection", "keep-alive")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return false, false, nil
 	}
   
 	if resp.StatusCode == 200 {
-    		bodyText, _ := ioutil.ReadAll(resp.Body)
-    		if strings.Contains(string(bodyText), "CHECK_STORES") || strings.Contains(string(bodyText), "ADD_TO_CART") {
-      			return true
+    		body, _ := ioutil.ReadAll(resp.Body)
+    		if strings.Contains(string(body), "CHECK_STORES") || strings.Contains(string(body), "ADD_TO_CART") {
+      			return false, true, nil
 		}
   	} else {
    		 log.Println(fmt.Sprintf("Status Code: %d", resp.StatusCode))
+   		 return true, false, nil
   	}
   
-  	return false
+  	return false, false, nil
 }
 
-func BestbuyMonitorTask(monitorData *elektra.BestbuyMonitorData) {
-	client := elektra.CreateClient(monitorData.UseProxies, monitorData.Proxies)
+func (monitor *BestbuyMonitor) BestbuyMonitorTask() (bool, error) {
+	client, err := elektra.CreateClient(monitor.Proxy)
+	if err != nil {
+		return false, err
+	}
  
-	if monitorData.UserAgent == "" {
-		monitorData.UserAgent = ua.RandomType(ua.Desktop)
+	if monitor.UserAgent == "" {
+		monitor.UserAgent = ua.RandomType(ua.Desktop)
 	}
   
 	for {
 		log.Println("Checking Stock")
-		inStock := bestbuyCheckStock(client, monitorData)
-		if inStock {
-			return
+		isBanned, inStock, err := monitor.bestbuyCheckStock(client)
+		if err != nil {
+			return isBanned, err
 		}
 
-		time.Sleep(time.Second * time.Duration(monitorData.PollingInterval))
+		if inStock {
+			return isBanned, nil
+		}
+
+		time.Sleep(time.Second * time.Duration(monitor.PollingInterval))
 	}
 }
