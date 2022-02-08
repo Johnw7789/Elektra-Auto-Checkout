@@ -18,20 +18,18 @@ type BillingData struct {
 	Cvv       string
 }
 
-type AccountData struct {
+type AccountLoginData struct {
 	Username string
 	Password string
 	Email    string
 	Phone    string
 }
 
-type AmazonMonitorData struct {
-	UserAgent       string
-	Proxies         []string
-	UseProxies      bool
-	PollingInterval int
-	Sku             string
-	OfferId         string
+type AccountCreationData struct {
+	Username string
+	Password string
+	Email    string
+	Phone    string
 }
 
 type AmazonCheckoutData struct {
@@ -47,18 +45,4 @@ type AmazonCheckoutData struct {
 	OrderNum   string
 }
 
-type BestbuyMonitorData struct {
-	UserAgent       string
-	Proxies         []string
-	UseProxies      bool
-	PollingInterval int
-	Sku             string
-}
 
-type NeweggMonitorData struct {
-	UserAgent       string
-	Proxies         []string
-	UseProxies      bool
-	PollingInterval int
-	Sku             string
-}
