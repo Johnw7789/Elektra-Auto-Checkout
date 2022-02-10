@@ -4,10 +4,8 @@ import (
 	"github.com/obito/cclient"
 	utls "github.com/refraction-networking/utls"
 	"log"
-	"math/rand"
 	"net/http"
 	"strings"
-	"time"
 )
 
 func Parse(value string, a string, b string) string {
