@@ -26,27 +26,27 @@ func Parse(value string, a string, b string) string {
 	return value[posFirstAdjusted:posLast]
 }
 
-func CreateClient(useProxies bool, proxies []string) *http.Client {
-	if useProxies {
-		rand.Seed(time.Now().Unix())
-		proxy := "http://" + proxies[rand.Intn(len(proxies))] //Only works with IP authenticated proxies atm (IP:Port), not yet with User:Pass:IP:Port proxies
 
-		client, err := cclient.NewClient(utls.HelloFirefox_Auto, true, proxy) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true, and use a proxy
+func CreateClient(proxy string) (*http.Client, error) {
+	if proxy != "" {
+		proxyUrl := "http://" + proxy //Only works with IP authenticated proxies atm (IP:Port), not yet with User:Pass:IP:Port proxies
+
+		client, err := cclient.NewClient(utls.HelloFirefox_Auto, true, proxyUrl) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true, and use a proxy
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		
-		log.Println("Created client")
+		log.Println("Created Client")
 
-		return &client
+		return &client, nil
 	} else {
 		client, err := cclient.NewClient(utls.HelloFirefox_Auto, true) //Create an http client with a Firefox TLS fingerprint, set automatic storage of cookies to true
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		
-		log.Println("Created client")
+		log.Println("Created Client")
 
-		return &client
+		return &client, nil
 	}
 }
