@@ -21,8 +21,8 @@ func main() {
 	}
 	
 	if banned {
-		log.Println(fmt.Sprintf("Your IP is flagged", monitorData.Sku))
+		log.Println(fmt.Sprintf("Your IP is flagged", monitor.Sku))
 	} else {
-		log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
+		log.Println(fmt.Sprintf("SKU %s: In Stock", monitor.Sku))
 	}
 }
