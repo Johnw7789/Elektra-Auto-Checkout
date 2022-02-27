@@ -41,6 +41,7 @@ func (monitor *AmazonMonitor) amazonCheckStock(client *http.Client, apiToken str
 	if err != nil {
 		return false, false, false, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode == 200 {
 		return true, false, false, nil //In stock, api token refresh is not required
@@ -63,9 +64,12 @@ func (monitor *AmazonMonitor) getApiToken(client *http.Client) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
 
 	apiToken := elektra.Parse(string(body), "\"csrfToken\":\"", "\",\"baseAsin\"")
 	return apiToken, nil
@@ -96,17 +100,17 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 		monitor.UserAgent = ua.RandomType(ua.Desktop)
 	}
 
-	log.Println("Getting Session")
+	log.Println(fmt.Sprintf("[SKU %s] Getting Session", monitor.Sku))
 	monitor.createSession(client)
 
-	log.Println("Getting API Token")
+	log.Println(fmt.Sprintf("[SKU %s] Getting API Token", monitor.Sku))
 	apiToken, err := monitor.getApiToken(client)
 	if err != nil {
 		return false, err
 	}
 
 	for {
-		log.Println("Checking Stock")
+		log.Println(fmt.Sprintf("[SKU %s] Checking Stock", monitor.Sku))
 		inStock, refreshRequired, isBanned, err := monitor.amazonCheckStock(client, apiToken)
 		if err != nil {
 			return isBanned, err
