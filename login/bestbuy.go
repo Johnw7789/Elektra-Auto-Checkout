@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 	ua "github.com/wux1an/fake-useragent"
+	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
 )
 
 type BestBuyEncryptionData struct {
@@ -284,31 +285,31 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 		return false, false, err
 	}
 	
-  	emailPublicKey, emailKeyId, err := getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-email")
+  	emailPublicKey, emailKeyId, err := login.getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-email")
 	if err != nil {
 		log.Println("Error fetching email public key")
 		return false, false, err
 	}
 	
-	activityPublicKey, activityKeyId, err := getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-user-activity")
+	activityPublicKey, activityKeyId, err := login.getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-user-activity")
 	if err != nil {
 		log.Println("Error fetching activity public key")
 		return false, false, err
 	}
 	
-  	login.EncryptedData.EncryptedEmail, err = bestbuyEncrypt(login.Email, emailPublicKey, emailKeyId)
+  	login.EncryptedData.EncryptedEmail, err = login.bestbuyEncrypt(login.Email, emailPublicKey, emailKeyId)
 	if err != nil {
 		log.Println("Error encrypting email")
 		return false, false, err
 	}
 	
-	login.EncryptedData.EncryptedAgent, err = bestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", login.UserAgent), activityPublicKey, activityKeyId)
+	login.EncryptedData.EncryptedAgent, err = login.bestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", login.UserAgent), activityPublicKey, activityKeyId)
 	if err != nil {
 		log.Println("Error encrypting useragent")
 		return false, false, err
 	}
 	
-	login.EncryptedData.EncryptedActivity, err = bestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
+	login.EncryptedData.EncryptedActivity, err = login.bestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
 	if err != nil {
 		log.Println("Error encrypting activity")
 		return false, false, err
