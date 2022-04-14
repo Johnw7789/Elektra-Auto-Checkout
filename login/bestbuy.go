@@ -241,7 +241,7 @@ func scrapeLoginData(client * http.Client) error {
 	initDataBytes := Parse(responseString, "var initData = ", "; </script>")
 	initData := string(initDataBytes)
 
-	login.BestBuyLoginData.VerificationCodeFieldName := gjson.Get(initData, "verificationCodeFieldName").String()
+	login.BestBuyLoginData.VerificationCodeFieldName = gjson.Get(initData, "verificationCodeFieldName").String()
 
 	passwordArray := gjson.Get(initData, "codeList")
 	for _, passwordField := range passwordArray.Array() {
@@ -254,16 +254,16 @@ func scrapeLoginData(client * http.Client) error {
 
 	alphaArray := gjson.Get(initData, "alpha")
 	for _, alpha := range alphaArray.Array() {
-		decodedString, _ := base64.URLEncoding.DecodeString(reverse(alpha.String()))
+		decodedString, _ := base64.URLEncoding.DecodeString(login.reverse(alpha.String()))
 		if strings.Contains(string(decodedString) , "_A_") {
 			login.BestBuyLoginData.EncryptedAlpha = alpha.String()
 			break
 		}
 	}
 
-	login.BestBuyLoginData.EmailField := gjson.Get(initData, "emailFieldName").String()
-	login.BestBuyLoginData.Salmon := gjson.Get(initData, "Salmon").String()
-	login.BestBuyLoginData.Token := gjson.Get(initData, "token").String()
+	login.BestBuyLoginData.EmailField = gjson.Get(initData, "emailFieldName").String()
+	login.BestBuyLoginData.Salmon = gjson.Get(initData, "Salmon").String()
+	login.BestBuyLoginData.Token = gjson.Get(initData, "token").String()
 }
 
 
