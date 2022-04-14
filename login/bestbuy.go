@@ -21,29 +21,29 @@ import (
 )
 
 type BestBuyEncryptionData struct {
-  EncryptedEmail    string
-  EncryptedAgent    string
-  EncryptedActivity string
+  	EncryptedEmail    string
+  	EncryptedAgent    string
+  	EncryptedActivity string
 }
 
 type BestBuyLoginData struct {
-  VerificationCodeFieldName string
-  EncryptedPasswordField    string
-  EncryptedAlpha            string
-  EmailField                string
-  Salmon                    string
-  Token                     string
+  	VerificationCodeFieldName string
+  	EncryptedPasswordField    string
+  	EncryptedAlpha            string
+  	EmailField                string
+  	Salmon                    string
+  	Token                     string
 }
 
 type BestBuyLogin struct {
-  Username      string
+  	Username      string
 	Password      string
 	Email         string
 	Phone         string
-  UserAgent     string
-  Proxy         string       
-  LoginData     BestBuyLoginData
-  EncryptedData BestBuyEncryptionData
+  	UserAgent     string
+  	Proxy         string       
+	LoginData     BestBuyLoginData
+  	EncryptedData BestBuyEncryptionData
 }
 
 
