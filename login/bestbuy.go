@@ -8,45 +8,45 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
-	"github.com/obito/cclient"
-	utls "github.com/refraction-networking/utls"
+	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
 	"github.com/tidwall/gjson"
+	ua "github.com/wux1an/fake-useragent"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/mail"
 	"regexp"
 	"strings"
 	"time"
-	ua "github.com/wux1an/fake-useragent"
-	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
 )
 
 type BestBuyEncryptionData struct {
-  	EncryptedEmail    string
-  	EncryptedAgent    string
-  	EncryptedActivity string
+	EncryptedEmail    string
+	EncryptedAgent    string
+	EncryptedActivity string
 }
 
 type BestBuyLoginData struct {
-  	VerificationCodeFieldName string
-  	EncryptedPasswordField    string
-  	EncryptedAlpha            string
-  	EmailField                string
-  	Salmon                    string
-  	Token                     string
+	VerificationCodeFieldName string
+	EncryptedPasswordField    string
+	EncryptedAlpha            string
+	EmailField                string
+	Salmon                    string
+	Token                     string
 }
 
 type BestBuyLogin struct {
-  	Username      string
-	Email         string
-	Password      string
-	Phone         string
-	GmailPassword string
-  	UserAgent     string
-  	Proxy         string       
-	LoginData     BestBuyLoginData
-  	EncryptedData BestBuyEncryptionData
+	Username      		  string
+	Email         		  string
+	Password      		  string
+	Phone         		  string
+	GmailPassword 		  string
+	UserAgent     		  string
+	Proxy         		  string
+	BestBuyLoginData      BestBuyLoginData
+	BestBuyEncryptionData BestBuyEncryptionData
 }
 
 
@@ -153,7 +153,7 @@ func (login *BestBuyLogin) reverse(s string) string {
 	return string(rs)
 }
 
-func (login *BestBuyLogin) getPublicKey(client * http.Client, url string) (string, string error) {
+func (login *BestBuyLogin) getPublicKey(client * http.Client, url string) (string, string, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", "", err
@@ -182,34 +182,24 @@ func (login *BestBuyLogin) getPublicKey(client * http.Client, url string) (strin
 	publicKey := gjson.Get(string(bodyText), "publicKey").String()
 	keyId := gjson.Get(string(bodyText), "keyId").String()
 
-	return publicKey, keyId
+	return publicKey, keyId, nil
 }
 
 func (login *BestBuyLogin) bestbuyEncrypt(s string, publicKey string, keyId string) (string, error) {
-	block, err := pem.Decode([]byte(publicKey))
-	if err != nil {
-		return "", err
-	}
-	parsedKey, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return "", err
-	}
-	var ok bool
-	var pubkey *rsa.PublicKey
-	if pubkey, ok = parsedKey.(*rsa.PublicKey); !ok {
-		return "", err
-	}
-	rng := rand.Reader
-	ciphertext, err := rsa.EncryptOAEP(sha1.New(), rng, pubkey, []byte(s), nil)
-	if err != nil {
-		return "", err
-	}
+	block, _ := pem.Decode([]byte(publicKey))
+	parsedKey, _ := x509.ParsePKIXPublicKey(block.Bytes)
 
-	return strings.Join([]string{"1", keyId, base64.StdEncoding.EncodeToString(ciphertext)}, ":")
+	var pubkey *rsa.PublicKey
+	pubkey, _ = parsedKey.(*rsa.PublicKey)
+
+	rng := rand.Reader
+	ciphertext, _ := rsa.EncryptOAEP(sha1.New(), rng, pubkey, []byte(s), nil)
+
+	return strings.Join([]string{"1", keyId, base64.StdEncoding.EncodeToString(ciphertext)}, ":"), nil
 }
 
 
-func scrapeLoginData(client * http.Client) error {
+func (login *BestBuyLogin) scrapeLoginData(client * http.Client) error {
 	req, err := http.NewRequest("GET", "https://www.bestbuy.com/identity/global/signin", nil)
 	if err != nil {
 		return err
@@ -265,46 +255,16 @@ func scrapeLoginData(client * http.Client) error {
 	login.BestBuyLoginData.EmailField = gjson.Get(initData, "emailFieldName").String()
 	login.BestBuyLoginData.Salmon = gjson.Get(initData, "Salmon").String()
 	login.BestBuyLoginData.Token = gjson.Get(initData, "token").String()
+
+	return nil
 }
 
 
-func bestbuyLogin(client * http.Client, loginJson string) (string, error) {
+func (login *BestBuyLogin) bestbuyLogin(client * http.Client, loginJson string) (string, error) {
 	var data = strings.NewReader(loginJson)
 	req, err := http.NewRequest("POST", "https://www.bestbuy.com/identity/authenticate", data)
 	if err != nil {
-		return err
-	}
-	req.Header.Set("authority", "www.bestbuy.com")
-	req.Header.Set("sec-ch-ua", "\" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"97\", \"Chromium\";v=\"97\"")
-	req.Header.Set("sec-ch-ua-mobile", "?0")
-	req.Header.Set("user-agent", userAgent)
-	req.Header.Set("content-type", "application/json")
-	req.Header.Set("accept", "application/json")
-	req.Header.Set("sec-ch-ua-platform", "\"macOS\"")
-	req.Header.Set("origin", "https://www.bestbuy.com")
-	req.Header.Set("sec-fetch-site", "same-origin")
-	req.Header.Set("sec-fetch-mode", "cors")
-	req.Header.Set("sec-fetch-dest", "empty")
-	req.Header.Set("accept-language", "en-US,en;q=0.9")
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	response, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return string(response)
-}
-
-
-func (login *BestBuyLogin) submitAuthCode(client *http.Client, authCode string, flowOptions string) (string, error) {
-	var data = strings.NewReader(fmt.Sprintf(`{"token":"%s","isResetFlow":false,"challengeType":"2","smsDigits":"","flowOptions":"%s","%s":"%s","%s":"%s"}`, login.BestBuyLoginData.Token, flowOptions, login.BestBuyLoginData.EmailField, login.Email, login.BestBuyLoginData.VerificationCodeFieldName, authCode))
-	req, err := http.NewRequest("POST", "https://www.bestbuy.com/identity/unlock", data)
-	if err != nil {
-		return err
+		return "", err
 	}
 	req.Header.Set("authority", "www.bestbuy.com")
 	req.Header.Set("sec-ch-ua", "\" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"97\", \"Chromium\";v=\"97\"")
@@ -320,15 +280,47 @@ func (login *BestBuyLogin) submitAuthCode(client *http.Client, authCode string, 
 	req.Header.Set("accept-language", "en-US,en;q=0.9")
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
+	}
+	defer resp.Body.Close()
+	response, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(response), nil
+}
+
+
+func (login *BestBuyLogin) submitAuthCode(client *http.Client, authCode string, flowOptions string) (string, error) {
+	var data = strings.NewReader(fmt.Sprintf(`{"token":"%s","isResetFlow":false,"challengeType":"2","smsDigits":"","flowOptions":"%s","%s":"%s","%s":"%s"}`, login.BestBuyLoginData.Token, flowOptions, login.BestBuyLoginData.EmailField, login.Email, login.BestBuyLoginData.VerificationCodeFieldName, authCode))
+	req, err := http.NewRequest("POST", "https://www.bestbuy.com/identity/unlock", data)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("authority", "www.bestbuy.com")
+	req.Header.Set("sec-ch-ua", "\" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"97\", \"Chromium\";v=\"97\"")
+	req.Header.Set("sec-ch-ua-mobile", "?0")
+	req.Header.Set("user-agent", login.UserAgent)
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("accept", "application/json")
+	req.Header.Set("sec-ch-ua-platform", "\"macOS\"")
+	req.Header.Set("origin", "https://www.bestbuy.com")
+	req.Header.Set("sec-fetch-site", "same-origin")
+	req.Header.Set("sec-fetch-mode", "cors")
+	req.Header.Set("sec-fetch-dest", "empty")
+	req.Header.Set("accept-language", "en-US,en;q=0.9")
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
 	}
 	defer resp.Body.Close()
 	authResp, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return string(authResp)
+	return string(authResp), nil
 }
 
 
@@ -355,12 +347,14 @@ func (login *BestBuyLogin) verifyWithEmail(client *http.Client, flowOptions stri
 		return err
 	}
 	defer resp.Body.Close()
+
+	return nil
 }
 
 
 func (login *BestBuyLogin) getAuthCode(c * client.Client) string {
 	for {
-		message := gmail.GetNewestMessage(c)
+		message := GetNewestMessage(c)
 		if strings.Contains(message, "BestBuy") && strings.Contains(message, "Verification Code") {
 			re := regexp.MustCompile(`<span style="font-size:18px; font-weight:bold;">(.*?)</span>`)
 			authCode := re.FindString(message)
@@ -381,7 +375,7 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 		log.Println("Error creating client")
 		return false, false, err
 	}
-	
+
 	if login.UserAgent == "" {
 		login.UserAgent = ua.RandomType(ua.Desktop)
 	}
@@ -391,45 +385,45 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 		log.Println("Error scraping login data")
 		return false, false, err
 	}
-	
-  	emailPublicKey, emailKeyId, err := login.getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-email")
+
+	emailPublicKey, emailKeyId, err := login.getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-email")
 	if err != nil {
 		log.Println("Error fetching email public key")
 		return false, false, err
 	}
-	
+
 	activityPublicKey, activityKeyId, err := login.getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-user-activity")
 	if err != nil {
 		log.Println("Error fetching activity public key")
 		return false, false, err
 	}
-	
-  	login.EncryptedData.EncryptedEmail, err = login.bestbuyEncrypt(login.Email, emailPublicKey, emailKeyId)
+
+	login.BestBuyEncryptionData.EncryptedEmail, err = login.bestbuyEncrypt(login.Email, emailPublicKey, emailKeyId)
 	if err != nil {
 		log.Println("Error encrypting email")
 		return false, false, err
 	}
-	
-	login.EncryptedData.EncryptedAgent, err = login.bestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", login.UserAgent), activityPublicKey, activityKeyId)
+
+	login.BestBuyEncryptionData.EncryptedAgent, err = login.bestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", login.UserAgent), activityPublicKey, activityKeyId)
 	if err != nil {
 		log.Println("Error encrypting useragent")
 		return false, false, err
 	}
-	
-	login.EncryptedData.EncryptedActivity, err = login.bestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
+
+	login.BestBuyEncryptionData.EncryptedActivity, err = login.bestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
 	if err != nil {
 		log.Println("Error encrypting activity")
 		return false, false, err
 	}
-	
-	loginJson := fmt.Sprintf("{\"token\":\"%s\",\"activity\":\"%s\",\"loginMethod\":\"UID_PASSWORD\",\"flowOptions\":\"0000000000000000\",\"alpha\":\"%s\",\"Salmon\":\"%s\",\"encryptedEmail\":\"%s\",\"%s\":\"%s\",\"info\":\"%s\",\"%s\":\"%s\"}", login.BestBuyLoginData.Token, login.BestBuyEncryptionData.EncryptedActivity, login.BestBuyEncryptionData.EncryptedAlpha, login.BestBuyLoginData.Salmon, login.BestBuyEncryptionData.EncryptedEmail, login.BestBuyLoginData.EncryptedPasswordField, login.Password, login.BestBuyLoginData.EncryptedAgent, login.BestBuyLoginData.EmailField, login.Email)
-	loginResp, err := bestbuyLogin(client, loginJson)
+
+	loginJson := fmt.Sprintf("{\"token\":\"%s\",\"activity\":\"%s\",\"loginMethod\":\"UID_PASSWORD\",\"flowOptions\":\"0000000000000000\",\"alpha\":\"%s\",\"Salmon\":\"%s\",\"encryptedEmail\":\"%s\",\"%s\":\"%s\",\"info\":\"%s\",\"%s\":\"%s\"}", login.BestBuyLoginData.Token, login.BestBuyEncryptionData.EncryptedActivity, login.BestBuyLoginData.EncryptedAlpha, login.BestBuyLoginData.Salmon, login.BestBuyEncryptionData.EncryptedEmail, login.BestBuyLoginData.EncryptedPasswordField, login.Password, login.BestBuyEncryptionData.EncryptedAgent, login.BestBuyLoginData.EmailField, login.Email)
+	loginResp, err := login.bestbuyLogin(client, loginJson)
 	if err != nil {
 		log.Println("Error submitting login")
 		return false, false, err
 	}
-	
-	
+
+
 	status := gjson.Get(loginResp, "status").String()
 	if status == "success" {
 		log.Println("Successfully logged in")
@@ -438,7 +432,7 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 
 	} else if status == "stepUpRequired" {
 		log.Println("Code verification required")
-		
+
 		if login.GmailPassword != "" {
 			c := ImapLogin(login.Email, login.GmailPassword)
 
@@ -453,7 +447,10 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 
 			if authCode != "" {
 				log.Println(fmt.Sprintf("Fetched authentication code: %s", authCode))
-				authResp := submitAuthCode(client, authCode)
+				authResp,err := login.submitAuthCode(client, authCode, flowOptions)
+				if err != nil {
+					return false, false, err
+				}
 
 				if strings.Contains(authResp, "temporaryAccessToken") {
 					log.Println("Account flagged, new password required")
@@ -464,12 +461,12 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 				log.Println("Failed to fetch authentication code")
 				return false, false, nil
 			}
-			
+
 			//incomplete flow
 		} else {
 			return false, false, nil
 		}
-		
+
 
 	} else if status == "failure" {
 		log.Println("Account flagged")
@@ -478,4 +475,6 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 		log.Println("Unknown error")
 		return false, false, nil
 	}
+
+	return false, false, nil
 }
