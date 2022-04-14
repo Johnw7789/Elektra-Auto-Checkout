@@ -160,7 +160,7 @@ func (login *BestBuyLogin) getPublicKey(client * http.Client, url string) (strin
 	req.Header.Set("authority", "www.bestbuy.com")
 	req.Header.Set("sec-ch-ua", "\" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"97\", \"Chromium\";v=\"97\"")
 	req.Header.Set("sec-ch-ua-mobile", "?0")
-	req.Header.Set("user-agent", userAgent)
+	req.Header.Set("user-agent", login.UserAgent)
 	req.Header.Set("sec-ch-ua-platform", "\"macOS\"")
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("accept", "*/*")
