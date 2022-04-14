@@ -220,6 +220,6 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 	activityPublicKey, activityKeyId := getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-user-activity")
 	
   	login.EncryptedData.EncryptedEmail = bestbuyEncrypt(email, emailPublicKey, emailKeyId)
-	login.EncryptedData.EncryptedAgent = bestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", userAgent), activityPublicKey, activityKeyId)
+	login.EncryptedData.EncryptedAgent = bestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", login.UserAgent), activityPublicKey, activityKeyId)
 	login.EncryptedData.EncryptedActivity = bestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
 }
