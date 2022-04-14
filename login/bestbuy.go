@@ -175,33 +175,9 @@ func (login *BestBuyLogin) encrypt(s string, publicKey string, keyId string) str
 	return strings.Join([]string{"1", keyId, base64.StdEncoding.EncodeToString(ciphertext)}, ":")
 }
 
-
-func (login *BestBuyLogin) encrypt(s string, publicKey string, keyId string) string {
-	block, _ := pem.Decode([]byte(publicKey))
-	if block.Type != "PUBLIC KEY" {
-		log.Fatal("error decoding public key from pem")
-	}
-	parsedKey, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		log.Fatal("error parsing key")
-	}
-	var ok bool
-	var pubkey *rsa.PublicKey
-	if pubkey, ok = parsedKey.(*rsa.PublicKey); !ok {
-		log.Fatal("unable to parse public key")
-	}
-	rng := rand.Reader
-	ciphertext, err := rsa.EncryptOAEP(sha1.New(), rng, pubkey, []byte(s), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return strings.Join([]string{"1", keyId, base64.StdEncoding.EncodeToString(ciphertext)}, ":")
-}
-
 func (login *BestBuyLogin) BestbuyLoginSession() {
   
-  login.EncryptedData.EncryptedEmail = encrypt(email, emailPublicKey, emailKeyId)
+  	login.EncryptedData.EncryptedEmail = encrypt(email, emailPublicKey, emailKeyId)
 	login.EncryptedData.EncryptedAgent = encrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", userAgent), activityPublicKey, activityKeyId)
 	login.EncryptedData.EncryptedActivity = encrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), email), activityPublicKey, activityKeyId)
   
