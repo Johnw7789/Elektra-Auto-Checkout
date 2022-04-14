@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	ua "github.com/wux1an/fake-useragent"
 )
 
 type BestBuyEncryptionData struct {
@@ -150,9 +151,37 @@ func (login *BestBuyLogin) reverse(s string) string {
 	return string(rs)
 }
 
+func (login *BestBuyLogin) getPublicKey(client * http.Client, url string) (string, string) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Set("authority", "www.bestbuy.com")
+	req.Header.Set("sec-ch-ua", "\" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"97\", \"Chromium\";v=\"97\"")
+	req.Header.Set("sec-ch-ua-mobile", "?0")
+	req.Header.Set("user-agent", userAgent)
+	req.Header.Set("sec-ch-ua-platform", "\"macOS\"")
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("accept", "*/*")
+	req.Header.Set("sec-fetch-site", "same-origin")
+	req.Header.Set("sec-fetch-mode", "cors")
+	req.Header.Set("sec-fetch-dest", "empty")
+	//req.Header.Set("referer", "https://www.bestbuy.com/identity/signin?token=tid%3A505572da-7422-11ec-80b8-12491479a2d1")
+	req.Header.Set("accept-language", "en-US,en;q=0.9")
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	bodyText, err := ioutil.ReadAll(resp.Body)
 
+	publicKey := gjson.Get(string(bodyText), "publicKey").String()
+	keyId := gjson.Get(string(bodyText), "keyId").String()
 
-func (login *BestBuyLogin) encrypt(s string, publicKey string, keyId string) string {
+	return publicKey, keyId
+}
+
+func (login *BestBuyLogin) bestbuyEncrypt(s string, publicKey string, keyId string) string {
 	block, _ := pem.Decode([]byte(publicKey))
 	if block.Type != "PUBLIC KEY" {
 		log.Fatal("error decoding public key from pem")
@@ -175,10 +204,22 @@ func (login *BestBuyLogin) encrypt(s string, publicKey string, keyId string) str
 	return strings.Join([]string{"1", keyId, base64.StdEncoding.EncodeToString(ciphertext)}, ":")
 }
 
-func (login *BestBuyLogin) BestbuyLoginSession() {
-  
-  	login.EncryptedData.EncryptedEmail = encrypt(email, emailPublicKey, emailKeyId)
-	login.EncryptedData.EncryptedAgent = encrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", userAgent), activityPublicKey, activityKeyId)
-	login.EncryptedData.EncryptedActivity = encrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), email), activityPublicKey, activityKeyId)
-  
+func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
+	client, err := elektra.CreateClient(login.Proxy)
+	if err != nil {
+		log.Println("Error creating client")
+	}
+	
+	if login.UserAgent == "" {
+		login.UserAgent = ua.RandomType(ua.Desktop)
+	}
+
+	login.scrapeLoginData(client)
+	
+  	emailPublicKey, emailKeyId := getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-email")
+	activityPublicKey, activityKeyId := getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-user-activity")
+	
+  	login.EncryptedData.EncryptedEmail = bestbuyEncrypt(email, emailPublicKey, emailKeyId)
+	login.EncryptedData.EncryptedAgent = bestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", userAgent), activityPublicKey, activityKeyId)
+	login.EncryptedData.EncryptedActivity = bestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
 }
