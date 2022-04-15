@@ -45,8 +45,9 @@ type BestBuyLogin struct {
 	GmailPassword 		  string
 	UserAgent     		  string
 	Proxy         		  string
-	BestBuyLoginData      BestBuyLoginData
-	BestBuyEncryptionData BestBuyEncryptionData
+	Cookies			  string
+	BestBuyLoginData      	  BestBuyLoginData
+	BestBuyEncryptionData 	  BestBuyEncryptionData
 }
 
 
