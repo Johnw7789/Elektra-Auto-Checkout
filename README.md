@@ -35,18 +35,18 @@ Below is some example usage of the Amazon module. You can find additional exampl
 If ``UserAgent`` is left empty, a user-agent will be automatically generated for you. ``PollingInterval`` is the delay in seconds for which a monitor will sleep after every stock check. Once a monitor task is started, it will continue to monitor indefinitely until stock is detected.
 
 ```  
-monitorData := elektra.AmazonMonitorData{
+amazonMonitor := monitor.AmazonMonitor{
   UserAgent: "", 
   UseProxies: true,
-  Proxies: []string{"IP:Port", "IP:Port"},
+  Proxy: "",
   PollingInterval: 3,
   Sku: "ASIN",
   OfferId: "OfferId",
 }
   
-monitor.AmazonMonitorTask(&monitorData) 
+amazonMonitor.AmazonMonitorTask() 
   
-log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
+log.Println(fmt.Sprintf("SKU %s: In Stock", amazonMonitor.Sku))
 ```
 ###### Starting a checkout instance
 Account ``Cookies`` are needed in order to complete a checkout. You can use cookies from your browser or you can create a session using the Amazon login module (not yet implemented).``RetryDelay`` is the amount of time that a checkout task will sleep if there is an error in the checkout flow, before restarting. ``MaxRetries`` is the maximum amount of checkout attempts a checkout task will make before it returns. If the return value is false, the task was unable to complete a successful checkout after every attempt made. If it is true, then the checkout was succesful and ``OrderNum`` should now be populated with the order number. 
