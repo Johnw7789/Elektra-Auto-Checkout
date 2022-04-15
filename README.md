@@ -12,7 +12,7 @@ This project is not intended for resellers. This is a project for educational pu
 | **Site** | **Login** | **Monitor** | **Checkout** |
 |:---:|:---:|:---:|:---:|
 | amazon.com | |`✔`|`✔`|
-| bestbuy.com ||`✔`| |
+| bestbuy.com |`✔`|`✔`| |
 | newegg.com ||`✔`| |
 | evga.com ||| |
 | target.com | | ||
