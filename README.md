@@ -19,7 +19,7 @@ This project is not intended for resellers. This is a project for educational pu
 | walmart.com || | |
 
 * Add notifications module (Discord, Slack, Twilio)
-* Add auth code fetcher (imap + Gmail)
+* ~~Add auth code fetcher (imap + Gmail)~~ - Complete
 * Add account generators
 
 ## Installation
