@@ -17,6 +17,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -45,7 +46,7 @@ type BestBuyLogin struct {
 	GmailPassword 		  string
 	UserAgent     		  string
 	Proxy         		  string
-	Cookies			  string
+	Cookies 		  string
 	BestBuyLoginData      	  BestBuyLoginData
 	BestBuyEncryptionData 	  BestBuyEncryptionData
 }
@@ -369,6 +370,17 @@ func (login *BestBuyLogin) getAuthCode(c * client.Client) string {
 	}
 }
 
+func (login *BestBuyLogin) getCookieStr(client * http.Client) string {
+	var cookies string
+
+	url, _ := url.Parse("https://www.bestbuy.com")
+	for _, c := range client.Jar.Cookies(url) {
+		cookies += c.Name + "=" + c.Value + "; "
+	}
+
+	return cookies
+}
+
 //login successful (bool), is banned (bool), error
 func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 	client, err := elektra.CreateClient(login.Proxy)
@@ -428,8 +440,8 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 	status := gjson.Get(loginResp, "status").String()
 	if status == "success" {
 		log.Println("Successfully logged in")
+		login.Cookies = login.getCookieStr(client)
 		return true, false, nil
-
 
 	} else if status == "stepUpRequired" {
 		log.Println("Code verification required")
@@ -445,8 +457,10 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 
 			log.Println("Fetching auth code")
 			authCode := login.getAuthCode(c)
-
+			
 			if authCode != "" {
+				//incomplete flow
+				
 				log.Println(fmt.Sprintf("Fetched authentication code: %s", authCode))
 				authResp,err := login.submitAuthCode(client, authCode, flowOptions)
 				if err != nil {
@@ -456,14 +470,16 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 				if strings.Contains(authResp, "temporaryAccessToken") {
 					log.Println("Account flagged, new password required")
 				} else {
+					login.Cookies = login.getCookieStr(client)
 					return true, false, nil
 				}
+				
+				//incomplete flow
 			} else {
 				log.Println("Failed to fetch authentication code")
 				return false, false, nil
 			}
 
-			//incomplete flow
 		} else {
 			return false, false, nil
 		}
