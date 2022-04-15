@@ -63,7 +63,7 @@ amazonCheckout := checkout.AmazonCheckout{
   OfferId: "OfferId",
 }
   
-orderSuccess, isBanned, err := checkout.AmazonCheckoutTask() 
+orderSuccess, isBanned, err := amazonCheckout.AmazonCheckoutTask() 
 if err != nil {
   log.Fatal(err)
 }
