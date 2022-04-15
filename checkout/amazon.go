@@ -12,6 +12,21 @@ import (
 	"time"
 )
 
+
+type AmazonCheckout struct {
+	UserAgent  string
+	SessionId  string
+	Cookies    string
+	Proxy      string
+	UseProxies bool
+	RetryDelay int
+	MaxRetries int
+	Sku        string
+	OfferId    string
+	OrderNum   string
+}
+
+
 var turboHeaders = []string{
 	"Accept: */*",
 	"Content-Type: application/x-www-form-urlencoded",
@@ -22,120 +37,141 @@ var turboHeaders = []string{
 	"referer: https://www.amazon.com",
 }
 
-func amazonPlaceOrder(client *http.Client, checkoutData *elektra.AmazonCheckoutData, purchaseId string, csrfToken string) (bool, string) {
-	var data = strings.NewReader(fmt.Sprintf(`x-amz-checkout-csrf-token=%s&ref_=chk_spc_placeOrder&referrer=spc&pid=%s&pipelineType=turbo&clientId=retailwebsite&temporaryAddToCart=1&hostPage=detail&weblab=RCX_CHECKOUT_TURBO_DESKTOP_PRIME_87783&isClientTimeBased=1`, checkoutData.SessionId, purchaseId))
+
+func (checkout *AmazonCheckout) amazonPlaceOrder(client *http.Client, purchaseId string, csrfToken string) (bool, string, bool, error) {
+	var data = strings.NewReader(fmt.Sprintf(`x-amz-checkout-csrf-token=%s&ref_=chk_spc_placeOrder&referrer=spc&pid=%s&pipelineType=turbo&clientId=retailwebsite&temporaryAddToCart=1&hostPage=detail&weblab=RCX_CHECKOUT_TURBO_DESKTOP_PRIME_87783&isClientTimeBased=1`, checkout.SessionId, purchaseId))
 	req, err := http.NewRequest("POST", "https://www.amazon.com/checkout/spc/place-order?ref_=chk_spc_placeOrder&_srcRID=&clientId=retailwebsite&pipelineType=turbo&cachebuster=&pid="+purchaseId, data)
 	if err != nil {
-		return false, ""
+		return false, "", false, err
 	}
 
-	req.Header.Set("x-amz-checkout-entry-referer-url", "https://www.amazon.com/gp/product/"+checkoutData.Sku)
+	req.Header.Set("x-amz-checkout-entry-referer-url", "https://www.amazon.com/gp/product/"+checkout.Sku)
 	req.Header.Set("anti-csrftoken-a2z", csrfToken)
-	req.Header.Set("User-Agent", checkoutData.UserAgent)
+	req.Header.Set("User-Agent", checkout.UserAgent)
 	req.Header.Set("Referer", "https://www.amazon.com/checkout/spc?pid="+purchaseId+"&pipelineType=turbo&clientId=retailwebsite&temporaryAddToCart=1&hostPage=detail&weblab=RCX_CHECKOUT_TURBO_DESKTOP_PRIME_87783")
-	req.Header.Add("cookie", checkoutData.Cookies)
+	req.Header.Add("cookie", checkout.Cookies)
 	resp, err := client.Do(req)
 	if err != nil {
-		return false, ""
+		return false, "", false, err
 	}
 
 	defer resp.Body.Close()
 
 	for key, value := range resp.Header {
 		if strings.Contains(key, "thankyou") || strings.Contains(value[0], "thankyou") {
-			return true, ""
+			return true, "", false, nil
 		}
 	}
 
 	bodyText, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		return false, "", false, err
 	}
 
 	if strings.Contains(string(bodyText), "thankyou") {
-		return true, ""
+		return true, "", false, nil
 	}
 
-	return false, ""
+	return false, "", false, nil
 }
 
-func amazonAddToCart(client *http.Client, checkoutData *elektra.AmazonCheckoutData) (bool, string, string) {
-	postData := fmt.Sprintf(`isAsync=1&asin.1=%s&offerListing.1=%s&quantity.1=1`, checkoutData.Sku, checkoutData.OfferId)
+func (checkout *AmazonCheckout) amazonAddToCart(client *http.Client) (bool, string, string, bool, error) {
+	postData := fmt.Sprintf(`isAsync=1&asin.1=%s&offerListing.1=%s&quantity.1=1`, checkout.Sku, checkout.OfferId)
 
 	var data = strings.NewReader(postData)
 	req, err := http.NewRequest("POST", "https://www.amazon.com/checkout/turbo-initiate?ref_=dp_start-bbf_1_glance_buyNow_2-1&referrer=detail&pipelineType=turbo&clientId=retailwebsite&weblab=RCX_CHECKOUT_TURBO_DESKTOP_PRIME_87783&temporaryAddToCart=1&asin.1=", data)
 	if err != nil {
-		log.Fatal(err)
+		return false, "", "", false, err
 	}
 
-	req.Header.Set("x-amz-checkout-entry-referer-url", "https://www.amazon.com/dp/"+checkoutData.Sku)
-	req.Header.Set("x-amz-turbo-checkout-dp-url", "https://www.amazon.com/dp/"+checkoutData.Sku)
-	req.Header.Set("x-amz-checkout-csrf-token", checkoutData.SessionId)
-	req.Header.Set("user-agent", checkoutData.UserAgent)
-	req.Header.Set("cookie", checkoutData.Cookies)
+	req.Header.Set("x-amz-checkout-entry-referer-url", "https://www.amazon.com/dp/"+checkout.Sku)
+	req.Header.Set("x-amz-turbo-checkout-dp-url", "https://www.amazon.com/dp/"+checkout.Sku)
+	req.Header.Set("x-amz-checkout-csrf-token", checkout.SessionId)
+	req.Header.Set("user-agent", checkout.UserAgent)
+	req.Header.Set("cookie", checkout.Cookies)
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return false, "", "", false, err
 	}
 
 	defer resp.Body.Close()
 
 	bodyText, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		return false, "", "", false, err
 	}
 
 	if strings.Contains(string(bodyText), "Place your order") {
 		doc := soup.HTMLParse(string(bodyText))
 		purchaseId := elektra.Parse(string(bodyText), "currentPurchaseId\":\"", "\",\"pipelineType\"")
 		csrfToken := doc.Find("input", "name", "anti-csrftoken-a2z").Attrs()["value"]
-		return true, purchaseId, csrfToken
+		return true, purchaseId, csrfToken, false, nil
 	} else {
-		return false, "", ""
+		return false, "", "", false, nil
 	}
 }
 
-func amazonPrepareCart(client *http.Client, checkoutData *elektra.AmazonCheckoutData) {
+func (checkout *AmazonCheckout) amazonPrepareCart(client *http.Client) error {
 	var data = strings.NewReader(`isAsync=1&addressID=`)
 	req, err := http.NewRequest("POST", "https://www.amazon.com/checkout/turbo-initiate?ref_=chk_detail_eligibility_1-0&referrer=detail&pipelineType=turbo&clientId=retailwebsite&weblab=RCX_CHECKOUT_TURBO_DESKTOP_NONPRIME_87784&checkEligibilityOnly=true&temporaryAddToCart=1", data)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	req.Header.Set("x-amz-checkout-entry-referer-url", "https://www.amazon.com/dp/"+checkoutData.Sku)
-	req.Header.Set("x-amz-turbo-checkout-dp-url", "https://www.amazon.com/dp/"+checkoutData.Sku)
-	req.Header.Set("x-amz-checkout-csrf-token", checkoutData.SessionId)
-	req.Header.Set("user-agent", checkoutData.UserAgent)
-	req.Header.Set("cookie", checkoutData.Cookies)
+	req.Header.Set("x-amz-checkout-entry-referer-url", "https://www.amazon.com/dp/"+checkout.Sku)
+	req.Header.Set("x-amz-turbo-checkout-dp-url", "https://www.amazon.com/dp/"+checkout.Sku)
+	req.Header.Set("x-amz-checkout-csrf-token", checkout.SessionId)
+	req.Header.Set("user-agent", checkout.UserAgent)
+	req.Header.Set("cookie", checkout.Cookies)
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer resp.Body.Close()
+
+	return nil
 }
 
-func AmazonCheckoutTask(checkoutData *elektra.AmazonCheckoutData) bool {
-	client := elektra.CreateClient(checkoutData.UseProxies, checkoutData.Proxies)
-
-	if checkoutData.UserAgent == "" {
-		checkoutData.UserAgent = ua.RandomType(ua.Desktop) //If checkoutData.UserAgent is empty, set it to a randomly generated user agent
+func (checkout *AmazonCheckout) AmazonCheckoutTask() (bool, bool, error) {
+	client, err := elektra.CreateClient(checkout.Proxy)
+	if err != nil {
+		return false, false, err
 	}
 
-	for retries := 0; retries < checkoutData.MaxRetries; retries++ {
+	if checkout.UserAgent == "" {
+		checkout.UserAgent = ua.RandomType(ua.Desktop) //If checkoutData.UserAgent is empty, set it to a randomly generated user agent
+	}
+
+	for retries := 0; retries < checkout.MaxRetries; retries++ {
 		log.Println("Preparing Cart")
-		amazonPrepareCart(client, checkoutData)
+		checkout.amazonPrepareCart(client)
 		log.Println("Adding to Cart")
-		cartSuccess, purchaseId, csrfToken := amazonAddToCart(client, checkoutData)
+		cartSuccess, purchaseId, csrfToken, isBanned, err := checkout.amazonAddToCart(client)
+		if err != nil {
+			return false, false, err
+		} else if isBanned {
+			if err != nil {
+				return false, false, nil
+			}
+		}
 
 		if cartSuccess {
 			log.Println("Submitting Order")
-			success, orderNum := amazonPlaceOrder(client, checkoutData, purchaseId, csrfToken) //Todo: add ability to fetch order number, currently returns empty string
+			success, orderNum, isBanned, err := checkout.amazonPlaceOrder(client, purchaseId, csrfToken) //Todo: add ability to fetch order number, currently returns empty string
+			if err != nil {
+				return false, false, err
+			} else if isBanned {
+				if err != nil {
+					return false, false, nil
+				}
+			}
+
 			if success {
-				checkoutData.OrderNum = orderNum
-				return true
+				checkout.OrderNum = orderNum
+				return true, false, nil
 			}
 		}
-		time.Sleep(time.Second * time.Duration(checkoutData.RetryDelay))
+		time.Sleep(time.Second * time.Duration(checkout.RetryDelay))
 	}
-	return false
+	return false, false, nil
 }
