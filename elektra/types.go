@@ -32,17 +32,6 @@ type AccountCreationData struct {
 	Phone    string
 }
 
-type AmazonCheckoutData struct {
-	UserAgent  string
-	SessionId  string
-	Cookies    string
-	Proxies    []string
-	UseProxies bool
-	RetryDelay int
-	MaxRetries int
-	Sku        string
-	OfferId    string
-	OrderNum   string
-}
+
 
 
