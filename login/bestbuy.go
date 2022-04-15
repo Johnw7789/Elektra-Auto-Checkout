@@ -60,13 +60,13 @@ func ImapLogin(email string, password string) *client.Client {
 	}
 
 	// Login
-	log.Println("Logging in")
+	log.Println("Logging in to Gmail")
 	err = c.Login(email, password)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Logged in")
+	log.Println("Logged in to Gmail")
 
 	return c
 }
