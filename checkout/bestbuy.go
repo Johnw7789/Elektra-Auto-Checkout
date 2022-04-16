@@ -12,11 +12,11 @@ import (
 type BestBuyOrderData struct {
 	OrderId    string
 	ItemId     string
+	CartId     string
 }
 
 type BestBuyCheckout struct {
 	UserAgent  		 string
-	CartId     		 string
 	Cookies    		 string
 	Proxy      		 string
 	RetryDelay 		 int
