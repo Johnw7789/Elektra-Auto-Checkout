@@ -12,15 +12,15 @@ func main() {
 	sku := "B0873C4C67"
 	offerId := "5%2BU3RbI4MrLxJP1riew3ktYPNAEuKmceCPF1BTaKdwF9bGnxPX3cfIChUFRKBusiTPTd3gJEB9Az0V3TlZw0po6Mob%2BYvq37tir2AWHORVYNxN9kBTPxMuvTkuiELMuz3q9BWdzZKsylbBhRmq7cAHQgq7p9VSdR5e6J%2BWxORLR95D2He%2BodtT4wtctu24wt"
 		
-	monitor := monitor.AmazonMonitor{
+	amazonMonitor := monitor.AmazonMonitor{
 		UserAgent: "",
 		Proxy: "",
 		PollingInterval: 3,
-		Sku: "ASIN",
-		OfferId: "OfferId",
+		Sku: sku,
+		OfferId: offerId,
 	}
 
-	banned, err := monitor.AmazonMonitorTask()
+	banned, err := amazonMonitor.AmazonMonitorTask()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func main() {
 	if banned {
 		log.Println("Your IP was flagged")
 	} else {
-		log.Println(fmt.Sprintf("SKU %s: In Stock, Initiating Checkout", monitorData.Sku))
+		log.Println(fmt.Sprintf("SKU %s: In Stock, Initiating Checkout", amazonMonitor.Sku))
 		
 			
 		amazonCheckout := checkout.AmazonCheckout{
@@ -37,8 +37,8 @@ func main() {
 		  Cookies: "exampleCookie=exampleValue",
 		  MaxRetries: 5,
 		  RetryDelay: 3,
-		  Sku: "ASIN",
-		  OfferId: "OfferId",
+		  Sku: sku,
+		  OfferId: offerId,
 		}
 
 		orderSuccess, isBanned, err := amazonCheckout.AmazonCheckoutTask() 
