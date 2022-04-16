@@ -31,20 +31,25 @@ func main() {
 		log.Println(fmt.Sprintf("SKU %s: In Stock, Initiating Checkout", monitorData.Sku))
 		
 			
-		checkoutData := elektra.AmazonCheckoutData{
-  			UserAgent: "",
-  			UseProxies: true,
- 			Proxies: []string{"IP:Port", "IP:Port"},
-  			Cookies: cookieString,
-  			MaxRetries: 5,
-  			RetryDelay: 3,
-  			Sku: sku,
- 			OfferId: offerId,
+		amazonCheckout := checkout.AmazonCheckout{
+		  UserAgent: "",
+		  Proxy: "",
+		  Cookies: "exampleCookie=exampleValue",
+		  MaxRetries: 5,
+		  RetryDelay: 3,
+		  Sku: "ASIN",
+		  OfferId: "OfferId",
 		}
-  
-		orderSuccess := checkout.AmazonCheckoutTask(&checkoutData) 
-		if orderSuccess {
-  			log.Println("Checkout successful | order number: " + checkoutData.OrderNum)
+
+		orderSuccess, isBanned, err := amazonCheckout.AmazonCheckoutTask() 
+		if err != nil {
+		  log.Fatal(err)
+		}
+
+		if isBanned {
+		  //ip banned
+		} else if orderSuccess {
+		  log.Println("Checkout successful | order number: " + amazonCheckout.OrderNum)
 		}
 	}
 }
