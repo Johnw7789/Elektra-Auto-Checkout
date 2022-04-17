@@ -11,12 +11,12 @@ This project is not intended for resellers. This is a project for educational pu
 
 | **Site** | **Login** | **Monitor** | **Checkout** |
 |:---:|:---:|:---:|:---:|
-| amazon.com ||`✔`|`✔`|
+| amazon.com |WIP|`✔`|`✔`|
 | bestbuy.com |`✔`|`✔`|WIP|
 | newegg.com ||`✔`| |
 | evga.com ||||
-| target.com ||||
-| walmart.com ||||
+| target.com ||WIP||
+| walmart.com ||WIP||
 
 * Add notifications module (Discord, Slack, Twilio)
 * ~~Add auth code fetcher (imap + Gmail)~~ - Complete
