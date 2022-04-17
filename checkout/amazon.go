@@ -150,9 +150,7 @@ func (checkout *AmazonCheckout) AmazonCheckoutTask() (bool, bool, error) {
 		if err != nil {
 			return false, false, err
 		} else if isBanned {
-			if err != nil {
-				return false, false, nil
-			}
+			return false, false, nil
 		}
 
 		if cartSuccess {
@@ -161,9 +159,7 @@ func (checkout *AmazonCheckout) AmazonCheckoutTask() (bool, bool, error) {
 			if err != nil {
 				return false, false, err
 			} else if isBanned {
-				if err != nil {
-					return false, false, nil
-				}
+				return false, false, nil
 			}
 
 			if success {
