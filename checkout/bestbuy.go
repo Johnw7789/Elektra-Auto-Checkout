@@ -13,6 +13,7 @@ type BestBuyOrderData struct {
 	OrderId    string
 	ItemId     string
 	CartId     string
+	CustId     string
 }
 
 type BestBuyCheckout struct {
