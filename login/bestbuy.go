@@ -1,12 +1,8 @@
+
 package login
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha1"
-	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
 	"fmt"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
@@ -46,9 +42,9 @@ type BestBuyLogin struct {
 	GmailPassword 		  string
 	UserAgent     		  string
 	Proxy         		  string
-	Cookies 		  string
-	BestBuyLoginData      	  BestBuyLoginData
-	BestBuyEncryptionData 	  BestBuyEncryptionData
+	Cookies 			  string
+	BestBuyLoginData      BestBuyLoginData
+	BestBuyEncryptionData BestBuyEncryptionData
 }
 
 
@@ -60,13 +56,13 @@ func ImapLogin(email string, password string) *client.Client {
 	}
 
 	// Login
-	log.Println("Logging in to Gmail")
+	log.Println("Logging in")
 	err = c.Login(email, password)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Logged in to Gmail")
+	log.Println("Logged in")
 
 	return c
 }
@@ -186,20 +182,6 @@ func (login *BestBuyLogin) getPublicKey(client * http.Client, url string) (strin
 
 	return publicKey, keyId, nil
 }
-
-func (login *BestBuyLogin) bestbuyEncrypt(s string, publicKey string, keyId string) (string, error) {
-	block, _ := pem.Decode([]byte(publicKey))
-	parsedKey, _ := x509.ParsePKIXPublicKey(block.Bytes)
-
-	var pubkey *rsa.PublicKey
-	pubkey, _ = parsedKey.(*rsa.PublicKey)
-
-	rng := rand.Reader
-	ciphertext, _ := rsa.EncryptOAEP(sha1.New(), rng, pubkey, []byte(s), nil)
-
-	return strings.Join([]string{"1", keyId, base64.StdEncoding.EncodeToString(ciphertext)}, ":"), nil
-}
-
 
 func (login *BestBuyLogin) scrapeLoginData(client * http.Client) error {
 	req, err := http.NewRequest("GET", "https://www.bestbuy.com/identity/global/signin", nil)
@@ -411,19 +393,19 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 		return false, false, err
 	}
 
-	login.BestBuyEncryptionData.EncryptedEmail, err = login.bestbuyEncrypt(login.Email, emailPublicKey, emailKeyId)
+	login.BestBuyEncryptionData.EncryptedEmail, err = elektra.BestbuyEncrypt(login.Email, emailPublicKey, emailKeyId)
 	if err != nil {
 		log.Println("Error encrypting email")
 		return false, false, err
 	}
 
-	login.BestBuyEncryptionData.EncryptedAgent, err = login.bestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", login.UserAgent), activityPublicKey, activityKeyId)
+	login.BestBuyEncryptionData.EncryptedAgent, err = elektra.BestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", login.UserAgent), activityPublicKey, activityKeyId)
 	if err != nil {
 		log.Println("Error encrypting useragent")
 		return false, false, err
 	}
 
-	login.BestBuyEncryptionData.EncryptedActivity, err = login.bestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
+	login.BestBuyEncryptionData.EncryptedActivity, err = elektra.BestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
 	if err != nil {
 		log.Println("Error encrypting activity")
 		return false, false, err
@@ -457,10 +439,8 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 
 			log.Println("Fetching auth code")
 			authCode := login.getAuthCode(c)
-			
+
 			if authCode != "" {
-				//incomplete flow
-				
 				log.Println(fmt.Sprintf("Fetched authentication code: %s", authCode))
 				authResp,err := login.submitAuthCode(client, authCode, flowOptions)
 				if err != nil {
@@ -473,13 +453,12 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 					login.Cookies = login.getCookieStr(client)
 					return true, false, nil
 				}
-				
-				//incomplete flow
 			} else {
 				log.Println("Failed to fetch authentication code")
 				return false, false, nil
 			}
 
+			//incomplete flow
 		} else {
 			return false, false, nil
 		}
