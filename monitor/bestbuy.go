@@ -3,6 +3,7 @@ package monitor
 import (
 	"fmt"
 	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
+	"github.com/google/uuid"
 	ua "github.com/wux1an/fake-useragent"
 	"io/ioutil"
 	"log"
@@ -12,10 +13,18 @@ import (
 )
 
 type BestbuyMonitor struct {
+	Id				string
 	UserAgent       string
 	Proxy           string
 	PollingInterval int
 	Sku             string
+	Active			bool
+}
+
+func (monitor *BestbuyMonitor) Cancel() {
+	monitor.Active = false
+	log.Println(fmt.Sprintf("[Task %s] Task canceled", monitor.Id))
+	//add exit code
 }
 
 func (monitor *BestbuyMonitor) bestbuyCheckStock(client *http.Client) (bool, bool, error) {
@@ -49,6 +58,9 @@ func (monitor *BestbuyMonitor) bestbuyCheckStock(client *http.Client) (bool, boo
 }
 
 func (monitor *BestbuyMonitor) BestbuyMonitorTask() (bool, error) {
+	monitor.Active = true
+	monitor.Id = uuid.New().String()
+
 	client, err := elektra.CreateClient(monitor.Proxy)
 	if err != nil {
 		return false, err
@@ -58,8 +70,9 @@ func (monitor *BestbuyMonitor) BestbuyMonitorTask() (bool, error) {
 		monitor.UserAgent = ua.RandomType(ua.Desktop)
 	}
   
-	for {
-		log.Println("Checking Stock")
+	for monitor.Active {
+		log.Println("Checking stock")
+
 		isBanned, inStock, err := monitor.bestbuyCheckStock(client)
 		if err != nil {
 			return isBanned, err
@@ -71,4 +84,6 @@ func (monitor *BestbuyMonitor) BestbuyMonitorTask() (bool, error) {
 
 		time.Sleep(time.Second * time.Duration(monitor.PollingInterval))
 	}
+
+	return false, nil
 }
