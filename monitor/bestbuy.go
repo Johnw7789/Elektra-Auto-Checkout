@@ -71,7 +71,7 @@ func (monitor *BestbuyMonitor) BestbuyMonitorTask() (bool, error) {
 	}
   
 	for monitor.Active {
-		log.Println("Checking stock")
+		log.Println(fmt.Sprintf("[Task %s] Checking stock", monitor.Id))
 
 		isBanned, inStock, err := monitor.bestbuyCheckStock(client)
 		if err != nil {
