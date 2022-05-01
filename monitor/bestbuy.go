@@ -13,12 +13,12 @@ import (
 )
 
 type BestbuyMonitor struct {
-	Id				string
+	Id		string
 	UserAgent       string
 	Proxy           string
 	PollingInterval int
 	Sku             string
-	Active			bool
+	Active		bool
 }
 
 func (monitor *BestbuyMonitor) Cancel() {
