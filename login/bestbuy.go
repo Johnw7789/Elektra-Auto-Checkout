@@ -50,8 +50,8 @@ type BestBuyLogin struct {
 	BestBuyEncryptionData 	  BestBuyEncryptionData
 }
 
-func (monitor *BestBuyLogin) logMessage(msg string) {
-	if !monitor.LoggingDisabled {
+func (login *BestBuyLogin) logMessage(msg string) {
+	if !login.LoggingDisabled {
 		log.Println(fmt.Sprintf("[Login %s] [BestBuy] %s", monitor.Id, msg))
 	}
 }
