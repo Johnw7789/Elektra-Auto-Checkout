@@ -20,12 +20,19 @@ type AmazonMonitor struct {
 	PollingInterval int
 	Sku             string
 	OfferId         string
+	LoggingDisabled bool
 	Active          bool
+}
+
+func (monitor *AmazonMonitor) logMessage(msg string) {
+	if !monitor.LoggingDisabled {
+		log.Println(fmt.Sprintf("[Task %s] [Amazon] %s", monitor.Id, msg))
+	}
 }
 
 func (monitor *AmazonMonitor) Cancel() {
 	monitor.Active = false
-	log.Println(fmt.Sprintf("[Task %s] Task canceled", monitor.Id))
+	monitor.logMessage("Task canceled")
 	//add exit code
 }
 
@@ -110,11 +117,12 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 		monitor.UserAgent = ua.RandomType(ua.Desktop)
 	}
 
-	log.Println(fmt.Sprintf("[Task %s] Getting session", monitor.Id))
+	monitor.logMessage("Getting session")
 	if !monitor.Active {return false, nil}
 	monitor.createSession(client)
+	
 
-	log.Println(fmt.Sprintf("[Task %s] Getting API token", monitor.Id))
+	monitor.logMessage("Getting API token")
 	if !monitor.Active {return false, nil}
 	apiToken, err = monitor.getApiToken(client)
 	if err != nil {
@@ -122,7 +130,7 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 	}
 
 	for monitor.Active {
-		log.Println(fmt.Sprintf("[Task %s] Checking stock", monitor.Id))
+		monitor.logMessage("Checking stock")
 		inStock, refreshRequired, isBanned, err = monitor.amazonCheckStock(client, apiToken)
 		if err != nil {
 			return isBanned, err
