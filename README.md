@@ -55,11 +55,9 @@ go func() {
 	if banned {
 		log.Println("Your IP was flagged")
 	} else {
-
+		// in stock, do stuff
 	}
 	
-	// in stock, do stuff
-
 	wg.Done()
 	// all done
 }()
