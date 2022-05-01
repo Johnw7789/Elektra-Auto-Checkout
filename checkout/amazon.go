@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/anaskhan96/soup"
 	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
+	"github.com/google/uuid"
 	ua "github.com/wux1an/fake-useragent"
 	"io/ioutil"
 	"log"
@@ -14,16 +15,18 @@ import (
 
 
 type AmazonCheckout struct {
-	UserAgent  string
-	SessionId  string
-	Cookies    string
-	Proxy      string
-	UseProxies bool
-	RetryDelay int
-	MaxRetries int
-	Sku        string
-	OfferId    string
-	OrderNum   string
+	Id              	string
+	UserAgent  		string
+	SessionId 		string
+	Cookies    		string
+	Proxy      		string
+	RetryDelay 		int
+	MaxRetries 		int
+	Sku        		string
+	OfferId    		string
+	OrderNum   		string
+	LoggingDisabled 	bool
+	Active     	    	bool
 }
 
 
@@ -35,6 +38,19 @@ var turboHeaders = []string{
 	"accept-language: en-US,en;q=0.9",
 	"origin: https://www.amazon.com",
 	"referer: https://www.amazon.com",
+}
+
+
+func (checkout *AmazonCheckout) logMessage(msg string) {
+	if !checkout.LoggingDisabled {
+		log.Println(fmt.Sprintf("[Checkout %s] [Amazon] %s", checkout.Id, msg))
+	}
+}
+
+func (checkout *AmazonCheckout) Cancel() {
+	checkout.Active = false
+	checkout.logMessage(fmt.Sprintf("[Task %s] Task canceled", checkout.Id))
+	//add exit code
 }
 
 
@@ -133,6 +149,9 @@ func (checkout *AmazonCheckout) amazonPrepareCart(client *http.Client) error {
 }
 
 func (checkout *AmazonCheckout) AmazonCheckoutTask() (bool, bool, error) {
+	checkout.Active = true
+	checkout.Id = uuid.New().String()
+
 	client, err := elektra.CreateClient(checkout.Proxy)
 	if err != nil {
 		return false, false, err
@@ -143,23 +162,31 @@ func (checkout *AmazonCheckout) AmazonCheckoutTask() (bool, bool, error) {
 	}
 
 	for retries := 0; retries < checkout.MaxRetries; retries++ {
-		log.Println("Preparing Cart")
+		checkout.logMessage("Preparing Cart")
+		if !checkout.Active {return false, false, nil}
 		checkout.amazonPrepareCart(client)
-		log.Println("Adding to Cart")
+
+		checkout.logMessage("Adding to Cart")
+		if !checkout.Active {return false, false, nil}
 		cartSuccess, purchaseId, csrfToken, isBanned, err := checkout.amazonAddToCart(client)
 		if err != nil {
 			return false, false, err
 		} else if isBanned {
-			return false, false, nil
+			if err != nil {
+				return false, false, nil
+			}
 		}
 
 		if cartSuccess {
-			log.Println("Submitting Order")
+			checkout.logMessage("Submitting Order")
+			if !checkout.Active {return false, false, nil}
 			success, orderNum, isBanned, err := checkout.amazonPlaceOrder(client, purchaseId, csrfToken) //Todo: add ability to fetch order number, currently returns empty string
 			if err != nil {
 				return false, false, err
 			} else if isBanned {
-				return false, false, nil
+				if err != nil {
+					return false, false, nil
+				}
 			}
 
 			if success {
