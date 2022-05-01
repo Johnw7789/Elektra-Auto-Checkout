@@ -1,3 +1,4 @@
+
 package login
 
 import (
@@ -34,6 +35,7 @@ type BestBuyLoginData struct {
 }
 
 type BestBuyLogin struct {
+	Id            		  string
 	Username      		  string
 	Email         		  string
 	Password      		  string
@@ -41,14 +43,23 @@ type BestBuyLogin struct {
 	GmailPassword 		  string
 	UserAgent     		  string
 	Proxy         		  string
-	Cookies 			  string
+	Cookies 		  string
 	Active         		  bool
-	BestBuyLoginData      BestBuyLoginData
-	BestBuyEncryptionData BestBuyEncryptionData
+	LoggingDisabled       	  bool
+	BestBuyLoginData      	  BestBuyLoginData
+	BestBuyEncryptionData 	  BestBuyEncryptionData
+}
+
+func (monitor *BestBuyLogin) logMessage(msg string) {
+	if !monitor.LoggingDisabled {
+		log.Println(fmt.Sprintf("[Login %s] [BestBuy] %s", monitor.Id, msg))
+	}
 }
 
 func (login *BestBuyLogin) Cancel() {
-
+	login.Active = false
+	login.logMessage("Login canceled")
+	//add exit code
 }
 
 func ImapLogin(email string, password string) *client.Client {
@@ -58,14 +69,11 @@ func ImapLogin(email string, password string) *client.Client {
 		log.Fatal(err)
 	}
 
-	// Login
-	log.Println("Logging in")
+	// Login to gmail
 	err = c.Login(email, password)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	log.Println("Logged in")
 
 	return c
 }
@@ -370,7 +378,7 @@ func (login *BestBuyLogin) getCookieStr(client * http.Client) string {
 func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 	client, err := elektra.CreateClient(login.Proxy)
 	if err != nil {
-		log.Println("Error creating client")
+		login.logMessage("Error creating client")
 		return false, false, err
 	}
 
@@ -382,42 +390,42 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 	if !login.Active {return false, false, nil}
 	err = login.scrapeLoginData(client)
 	if err != nil {
-		log.Println("Error scraping login data")
+		login.logMessage("Error scraping login data")
 		return false, false, err
 	}
 
 	if !login.Active {return false, false, nil}
 	emailPublicKey, emailKeyId, err := login.getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-email")
 	if err != nil {
-		log.Println("Error fetching email public key")
+		login.logMessage("Error fetching email public key")
 		return false, false, err
 	}
 
 	if !login.Active {return false, false, nil}
 	activityPublicKey, activityKeyId, err := login.getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-user-activity")
 	if err != nil {
-		log.Println("Error fetching activity public key")
+		login.logMessage("Error fetching activity public key")
 		return false, false, err
 	}
 
 	if !login.Active {return false, false, nil}
 	login.BestBuyEncryptionData.EncryptedEmail, err = elektra.BestbuyEncrypt(login.Email, emailPublicKey, emailKeyId)
 	if err != nil {
-		log.Println("Error encrypting email")
+		login.logMessage("Error encrypting email")
 		return false, false, err
 	}
 
 	if !login.Active {return false, false, nil}
 	login.BestBuyEncryptionData.EncryptedAgent, err = elektra.BestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", login.UserAgent), activityPublicKey, activityKeyId)
 	if err != nil {
-		log.Println("Error encrypting useragent")
+		login.logMessage("Error encrypting useragent")
 		return false, false, err
 	}
 
 	if !login.Active {return false, false, nil}
 	login.BestBuyEncryptionData.EncryptedActivity, err = elektra.BestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
 	if err != nil {
-		log.Println("Error encrypting activity")
+		login.logMessage("Error encrypting activity")
 		return false, false, err
 	}
 
@@ -425,18 +433,18 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 	if !login.Active {return false, false, nil}
 	loginResp, err := login.bestbuyLogin(client, loginJson)
 	if err != nil {
-		log.Println("Error submitting login")
+		login.logMessage("Error submitting login")
 		return false, false, err
 	}
 
 
 	status := gjson.Get(loginResp, "status").String()
 	if status == "success" {
-		log.Println("Successfully logged in")
+		login.logMessage("Successfully logged in")
 		login.Cookies = login.getCookieStr(client)
 		return true, false, nil
 	} else if status == "stepUpRequired" {
-		log.Println("Code verification required")
+		login.logMessage("Code verification required")
 
 		if login.GmailPassword != "" {
 			if !login.Active {return false, false, nil}
@@ -449,13 +457,13 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 			if !login.Active {return false, false, nil}
 			login.verifyWithEmail(client, flowOptions, challengeType)
 
-			log.Println("Fetching auth code")
+			login.logMessage("Fetching auth code")
 			if !login.Active {return false, false, nil}
 			authCode := login.getAuthCode(c)
 
 			if authCode != "" {
 				if !login.Active {return false, false, nil}
-				log.Println(fmt.Sprintf("Fetched authentication code: %s", authCode))
+				login.logMessage(fmt.Sprintf("Fetched authentication code: %s", authCode))
 				authResp,err := login.submitAuthCode(client, authCode, flowOptions)
 				if err != nil {
 					return false, false, err
@@ -463,13 +471,13 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 
 				if !login.Active {return false, false, nil}
 				if strings.Contains(authResp, "temporaryAccessToken") {
-					log.Println("Account flagged, new password required")
+					login.logMessage("Account flagged, new password required")
 				} else {
 					login.Cookies = login.getCookieStr(client)
 					return true, false, nil
 				}
 			} else {
-				log.Println("Failed to fetch authentication code")
+				login.logMessage("Failed to fetch authentication code")
 				return false, false, nil
 			}
 
@@ -480,10 +488,10 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 
 
 	} else if status == "failure" {
-		log.Println("Account flagged")
+		login.logMessage("Account flagged")
 		return false, true, nil
 	} else {
-		log.Println("Unknown error")
+		login.logMessage("Unknown error")
 		return false, false, nil
 	}
 
