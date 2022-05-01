@@ -18,12 +18,18 @@ type BestbuyMonitor struct {
 	Proxy           string
 	PollingInterval int
 	Sku             string
+	LoggingDisabled bool
 	Active		bool
+}
+func (monitor *BestbuyMonitor) logMessage(msg string) {
+	if !monitor.LoggingDisabled {
+		log.Println(fmt.Sprintf("[Task %s] [BestBuy] %s", monitor.Id, msg))
+	}
 }
 
 func (monitor *BestbuyMonitor) Cancel() {
 	monitor.Active = false
-	log.Println(fmt.Sprintf("[Task %s] Task canceled", monitor.Id))
+	monitor.logMessage("Task canceled")
 	//add exit code
 }
 
@@ -50,7 +56,7 @@ func (monitor *BestbuyMonitor) bestbuyCheckStock(client *http.Client) (bool, boo
       			return false, true, nil
 		}
   	} else {
-   		 log.Println(fmt.Sprintf("Status Code: %d", resp.StatusCode))
+   		 monitor.logMessage("Status: " + resp.Status)
    		 return true, false, nil
   	}
   
@@ -71,7 +77,7 @@ func (monitor *BestbuyMonitor) BestbuyMonitorTask() (bool, error) {
 	}
   
 	for monitor.Active {
-		log.Println(fmt.Sprintf("[Task %s] Checking stock", monitor.Id))
+		monitor.logMessage("Checking stock")
 
 		isBanned, inStock, err := monitor.bestbuyCheckStock(client)
 		if err != nil {
