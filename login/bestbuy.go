@@ -1,4 +1,3 @@
-
 package login
 
 import (
@@ -43,10 +42,14 @@ type BestBuyLogin struct {
 	UserAgent     		  string
 	Proxy         		  string
 	Cookies 			  string
+	Active         		  bool
 	BestBuyLoginData      BestBuyLoginData
 	BestBuyEncryptionData BestBuyEncryptionData
 }
 
+func (login *BestBuyLogin) Cancel() {
+
+}
 
 func ImapLogin(email string, password string) *client.Client {
 	// Connect to server
@@ -363,7 +366,7 @@ func (login *BestBuyLogin) getCookieStr(client * http.Client) string {
 	return cookies
 }
 
-//login successful (bool), is banned (bool), error
+// BestbuyLoginSession login successful (bool), is banned (bool), error
 func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 	client, err := elektra.CreateClient(login.Proxy)
 	if err != nil {
@@ -375,36 +378,43 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 		login.UserAgent = ua.RandomType(ua.Desktop)
 	}
 
+	// very repetitive, checks to see if login.Cancel() was called
+	if !login.Active {return false, false, nil}
 	err = login.scrapeLoginData(client)
 	if err != nil {
 		log.Println("Error scraping login data")
 		return false, false, err
 	}
 
+	if !login.Active {return false, false, nil}
 	emailPublicKey, emailKeyId, err := login.getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-email")
 	if err != nil {
 		log.Println("Error fetching email public key")
 		return false, false, err
 	}
 
+	if !login.Active {return false, false, nil}
 	activityPublicKey, activityKeyId, err := login.getPublicKey(client, "https://www.bestbuy.com/api/csiservice/v2/key/cia-user-activity")
 	if err != nil {
 		log.Println("Error fetching activity public key")
 		return false, false, err
 	}
 
+	if !login.Active {return false, false, nil}
 	login.BestBuyEncryptionData.EncryptedEmail, err = elektra.BestbuyEncrypt(login.Email, emailPublicKey, emailKeyId)
 	if err != nil {
 		log.Println("Error encrypting email")
 		return false, false, err
 	}
 
+	if !login.Active {return false, false, nil}
 	login.BestBuyEncryptionData.EncryptedAgent, err = elektra.BestbuyEncrypt(fmt.Sprintf("{\"user-agent\": \"%s\"}", login.UserAgent), activityPublicKey, activityKeyId)
 	if err != nil {
 		log.Println("Error encrypting useragent")
 		return false, false, err
 	}
 
+	if !login.Active {return false, false, nil}
 	login.BestBuyEncryptionData.EncryptedActivity, err = elektra.BestbuyEncrypt(fmt.Sprintf("{mouseMoved\":true,\"keyboardUsed\":true,\"fieldReceivedInput\":true,\"fieldReceivedFocus\":true,\"timestamp\":\"%s\",\"email\":\"%s\"}", time.Now().UTC().Format("2006-01-02T15:04:05-0700"), login.Email), activityPublicKey, activityKeyId)
 	if err != nil {
 		log.Println("Error encrypting activity")
@@ -412,6 +422,7 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 	}
 
 	loginJson := fmt.Sprintf("{\"token\":\"%s\",\"activity\":\"%s\",\"loginMethod\":\"UID_PASSWORD\",\"flowOptions\":\"0000000000000000\",\"alpha\":\"%s\",\"Salmon\":\"%s\",\"encryptedEmail\":\"%s\",\"%s\":\"%s\",\"info\":\"%s\",\"%s\":\"%s\"}", login.BestBuyLoginData.Token, login.BestBuyEncryptionData.EncryptedActivity, login.BestBuyLoginData.EncryptedAlpha, login.BestBuyLoginData.Salmon, login.BestBuyEncryptionData.EncryptedEmail, login.BestBuyLoginData.EncryptedPasswordField, login.Password, login.BestBuyEncryptionData.EncryptedAgent, login.BestBuyLoginData.EmailField, login.Email)
+	if !login.Active {return false, false, nil}
 	loginResp, err := login.bestbuyLogin(client, loginJson)
 	if err != nil {
 		log.Println("Error submitting login")
@@ -424,29 +435,33 @@ func (login *BestBuyLogin) BestbuyLoginSession() (bool, bool, error) {
 		log.Println("Successfully logged in")
 		login.Cookies = login.getCookieStr(client)
 		return true, false, nil
-
 	} else if status == "stepUpRequired" {
 		log.Println("Code verification required")
 
 		if login.GmailPassword != "" {
+			if !login.Active {return false, false, nil}
 			c := ImapLogin(login.Email, login.GmailPassword)
 
 
 			flowOptions := gjson.Get(loginResp, "flowOptions").String()
 			challengeType := gjson.Get(loginResp, "challengeType").String()
 
+			if !login.Active {return false, false, nil}
 			login.verifyWithEmail(client, flowOptions, challengeType)
 
 			log.Println("Fetching auth code")
+			if !login.Active {return false, false, nil}
 			authCode := login.getAuthCode(c)
 
 			if authCode != "" {
+				if !login.Active {return false, false, nil}
 				log.Println(fmt.Sprintf("Fetched authentication code: %s", authCode))
 				authResp,err := login.submitAuthCode(client, authCode, flowOptions)
 				if err != nil {
 					return false, false, err
 				}
 
+				if !login.Active {return false, false, nil}
 				if strings.Contains(authResp, "temporaryAccessToken") {
 					log.Println("Account flagged, new password required")
 				} else {
