@@ -23,7 +23,6 @@ This project is not intended for resellers. This is a project for educational pu
 * Add account generators
 
 ## Installation
-##### Requires Go 1.7
 ``go get github.com/ffeathers/Elektra-Auto-Checkout``
 
 Use ``go mod tidy`` if issues arise with some of Elektra's imported modules.
