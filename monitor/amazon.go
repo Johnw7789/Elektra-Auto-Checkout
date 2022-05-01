@@ -3,6 +3,7 @@ package monitor
 import (
 	"fmt"
 	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
+	"github.com/google/uuid"
 	ua "github.com/wux1an/fake-useragent"
 	"io/ioutil"
 	"log"
@@ -11,14 +12,21 @@ import (
 	"time"
 )
 
-
 type AmazonMonitor struct {
+	Id              string
 	UserAgent       string
 	Proxy           string
 	UseProxy        bool
 	PollingInterval int
 	Sku             string
 	OfferId         string
+	Active          bool
+}
+
+func (monitor *AmazonMonitor) Cancel() {
+	monitor.Active = false
+	log.Println(fmt.Sprintf("[Task %s] Task canceled", monitor.Id))
+	//add exit code
 }
 
 func (monitor *AmazonMonitor) amazonCheckStock(client *http.Client, apiToken string) (bool, bool, bool, error) {
@@ -41,7 +49,6 @@ func (monitor *AmazonMonitor) amazonCheckStock(client *http.Client, apiToken str
 	if err != nil {
 		return false, false, false, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode == 200 {
 		return true, false, false, nil //In stock, api token refresh is not required
@@ -64,12 +71,9 @@ func (monitor *AmazonMonitor) getApiToken(client *http.Client) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
 	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
 
 	apiToken := elektra.Parse(string(body), "\"csrfToken\":\"", "\",\"baseAsin\"")
 	return apiToken, nil
@@ -91,6 +95,12 @@ func (monitor *AmazonMonitor) createSession(client *http.Client) error {
 }
 
 func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
+	var inStock, refreshRequired, isBanned bool
+	var apiToken string
+
+	monitor.Active = true
+	monitor.Id = uuid.New().String()
+
 	client, err := elektra.CreateClient(monitor.Proxy)
 	if err != nil {
 		return false, err
@@ -100,18 +110,20 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 		monitor.UserAgent = ua.RandomType(ua.Desktop)
 	}
 
-	log.Println(fmt.Sprintf("[SKU %s] Getting Session", monitor.Sku))
+	log.Println(fmt.Sprintf("[Task %s] Getting session", monitor.Id))
+	if !monitor.Active {return false, nil}
 	monitor.createSession(client)
 
-	log.Println(fmt.Sprintf("[SKU %s] Getting API Token", monitor.Sku))
-	apiToken, err := monitor.getApiToken(client)
+	log.Println(fmt.Sprintf("[Task %s] Getting API token", monitor.Id))
+	if !monitor.Active {return false, nil}
+	apiToken, err = monitor.getApiToken(client)
 	if err != nil {
 		return false, err
 	}
 
-	for {
-		log.Println(fmt.Sprintf("[SKU %s] Checking Stock", monitor.Sku))
-		inStock, refreshRequired, isBanned, err := monitor.amazonCheckStock(client, apiToken)
+	for monitor.Active {
+		log.Println(fmt.Sprintf("[Task %s] Checking stock", monitor.Id))
+		inStock, refreshRequired, isBanned, err = monitor.amazonCheckStock(client, apiToken)
 		if err != nil {
 			return isBanned, err
 		}
@@ -119,6 +131,7 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 			return isBanned, nil
 		} else {
 			if refreshRequired {
+				if !monitor.Active {return false, nil}
 				apiToken, err = monitor.getApiToken(client)
 				if err != nil {
 					return isBanned, err
@@ -128,4 +141,6 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 
 		time.Sleep(time.Second * time.Duration(monitor.PollingInterval))
 	}
+
+	return false, nil
 }
