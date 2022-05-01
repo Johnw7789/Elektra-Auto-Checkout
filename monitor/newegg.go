@@ -1,22 +1,36 @@
 package monitor
 
 import (
-	//"fmt"
+	"fmt"
+	"github.com/google/uuid"
 	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
 	ua "github.com/wux1an/fake-useragent"
-	//"io/ioutil"
 	"log"
 	"net/http"
-	//"strings"
 	"time"
 )
 
 
 type NeweggMonitor struct {
+	Id         	string
 	UserAgent       string
 	Proxy           string
 	PollingInterval int
 	Sku             string
+	LoggingDisabled bool
+	Active          bool
+}
+
+func (monitor *NeweggMonitor) logMessage(msg string) {
+	if !monitor.LoggingDisabled {
+		log.Println(fmt.Sprintf("[Task %s] [Newegg] %s", monitor.Id, msg))
+	}
+}
+
+func (monitor *NeweggMonitor) Cancel() {
+	monitor.Active = false
+	log.Println(fmt.Sprintf("[Task %s] Task canceled", monitor.Id))
+	//add exit code
 }
 
 func (monitor *NeweggMonitor) neweggCheckStock (client *http.Client,) (bool, bool, error) {
@@ -43,6 +57,9 @@ func (monitor *NeweggMonitor) neweggCheckStock (client *http.Client,) (bool, boo
 }
 
 func (monitor *NeweggMonitor) NeweggMonitorTask() (bool, error) {
+	monitor.Active = true
+	monitor.Id = uuid.New().String()
+
 	client, err := elektra.CreateClient(monitor.Proxy)
 	if err != nil {
 		return false, err
@@ -53,7 +70,7 @@ func (monitor *NeweggMonitor) NeweggMonitorTask() (bool, error) {
 	}
   
 	for {
-		log.Println("Checking Stock")
+		monitor.logMessage("Checking Stock")
 		inStock, isBanned, err := monitor.neweggCheckStock(client)
 		if err != nil {
 			return false, err
