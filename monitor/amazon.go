@@ -36,7 +36,7 @@ func (monitor *AmazonMonitor) Cancel() {
 	//add exit code
 }
 
-func (monitor *AmazonMonitor) amazonCheckStock(client *http.Client, apiToken string) (bool, bool, bool, error) {
+func (monitor *AmazonMonitor) AmazonCheckStock(client *http.Client, apiToken string) (bool, bool, bool, error) {
 	acceptheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items/v1\""
 	contentheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items.request/v1\""
 
@@ -68,7 +68,7 @@ func (monitor *AmazonMonitor) amazonCheckStock(client *http.Client, apiToken str
 	return false, false, true, nil
 }
 
-func (monitor *AmazonMonitor) getApiToken(client *http.Client) (string, error) {
+func (monitor *AmazonMonitor) GetApiToken(client *http.Client) (string, error) {
 	url := "https://www.amazon.com/gp/aw/d/B00M382RJO" //One of many Amazon product pages that contains an embedded api token
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -86,7 +86,7 @@ func (monitor *AmazonMonitor) getApiToken(client *http.Client) (string, error) {
 	return apiToken, nil
 }
 
-func (monitor *AmazonMonitor) createSession(client *http.Client) error {
+func (monitor *AmazonMonitor) CreateSession(client *http.Client) error {
 	url := "https://www.amazon.com/gp/aws/cart/add-res.html?Quantity.1=1&OfferListingId.1="
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -119,19 +119,19 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 
 	monitor.logMessage("Getting session")
 	if !monitor.Active {return false, nil}
-	monitor.createSession(client)
+	monitor.CreateSession(client)
 	
 
 	monitor.logMessage("Getting API token")
 	if !monitor.Active {return false, nil}
-	apiToken, err = monitor.getApiToken(client)
+	apiToken, err = monitor.GetApiToken(client)
 	if err != nil {
 		return false, err
 	}
 
 	for monitor.Active {
 		monitor.logMessage("Checking stock")
-		inStock, refreshRequired, isBanned, err = monitor.amazonCheckStock(client, apiToken)
+		inStock, refreshRequired, isBanned, err = monitor.AmazonCheckStock(client, apiToken)
 		if err != nil {
 			return isBanned, err
 		}
@@ -140,7 +140,7 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 		} else {
 			if refreshRequired {
 				if !monitor.Active {return false, nil}
-				apiToken, err = monitor.getApiToken(client)
+				apiToken, err = monitor.GetApiToken(client)
 				if err != nil {
 					return isBanned, err
 				}
