@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
 	"github.com/google/uuid"
-	ua "github.com/wux1an/fake-useragent"
+	//ua "github.com/wux1an/fake-useragent"
 	"io/ioutil"
 	"log"
 	"net/http"
