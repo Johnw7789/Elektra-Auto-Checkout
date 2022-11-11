@@ -37,6 +37,22 @@ func (monitor *AmazonMonitor) Cancel() {
 	//add exit code
 }
 
+func ParseV2(str string, start string, end string) (result string) {
+	s := strings.Index(str, start)
+	if s == -1 {
+		return
+	}
+	s += len(start)
+	e := strings.Index(str[s:], end)
+	if e == -1 {
+		return
+	}
+	e += s + e - 1
+	return str[s:e]
+}
+
+
+
 func (monitor *AmazonMonitor) AmazonCheckStock(client *http.Client, apiToken string) (bool, bool, bool, error) {
 	acceptheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items/v1\""
 	contentheader := "application/vnd.com.amazon.api+json; type=\"cart.add-items.request/v1\""
@@ -102,7 +118,7 @@ func (monitor *AmazonMonitor) AmazonCheckStockV2(client *http.Client, apiToken s
 }
 
 func (monitor *AmazonMonitor) GetApiToken(client *http.Client) (string, error) {
-	url := "https://www.amazon.com/gp/aw/d/B00M382RJO" //One of many Amazon product pages that contains an embedded api token
+	url := "https://www.amazon.com/Ring-Video-Doorbell-3/dp/B0849J7W5X" //One of many Amazon product pages that contains an embedded api token
 
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("user-agent", monitor.UserAgent)
@@ -115,12 +131,14 @@ func (monitor *AmazonMonitor) GetApiToken(client *http.Client) (string, error) {
 
 	body, _ := ioutil.ReadAll(resp.Body)
 
-	apiToken := elektra.Parse(string(body), "\"csrfToken\":\"", "\",\"baseAsin\"")
+	tokenStr := Parse(string(body), `","aapiAjaxEndpoint":"data.amazon.com","csrfToken":"`, `"}</script>`)
+	tokenSplit := strings.Split(tokenStr, "\"}<")
+	apiToken := tokenSplit[0]
 	return apiToken, nil
 }
 
 func (monitor *AmazonMonitor) CreateSession(client *http.Client) error {
-	url := "https://www.amazon.com/gp/aws/cart/add-res.html?Quantity.1=1&OfferListingId.1="
+	url := "https://www.amazon.com"
 
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("user-agent", monitor.UserAgent)
@@ -134,7 +152,7 @@ func (monitor *AmazonMonitor) CreateSession(client *http.Client) error {
 	return nil
 }
 
-func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
+func (monitor *AmazonMonitor) AmazonMonitorTaskV2() (bool, error) {
 	var inStock, refreshRequired, isBanned bool
 	var apiToken string
 
@@ -146,9 +164,7 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 		return false, err
 	}
 
-	if monitor.UserAgent == "" {
-		monitor.UserAgent = ua.RandomType(ua.Desktop)
-	}
+	monitor.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.54 Safari/537.36"
 
 	monitor.logMessage("Getting session")
 	if !monitor.Active {return false, nil}
@@ -164,7 +180,7 @@ func (monitor *AmazonMonitor) AmazonMonitorTask() (bool, error) {
 
 	for monitor.Active {
 		monitor.logMessage("Checking stock")
-		inStock, refreshRequired, isBanned, err = monitor.AmazonCheckStock(client, apiToken)
+		inStock, refreshRequired, isBanned, err = monitor.AmazonCheckStockV2(client, apiToken)
 		if err != nil {
 			return isBanned, err
 		}
