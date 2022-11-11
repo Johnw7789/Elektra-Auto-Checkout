@@ -17,6 +17,7 @@ type AmazonMonitor struct {
 	UserAgent       string
 	Proxy           string
 	UseProxy        bool
+	Price           float64
 	PollingInterval int
 	Sku             string
 	OfferId         string
@@ -64,6 +65,31 @@ func (monitor *AmazonMonitor) AmazonCheckStock(client *http.Client, apiToken str
 	} else if resp.StatusCode == 422 { //Usually status code 422 (out of stock) but an api token refresh is not required
 		return false, false, false, nil
 	}
+
+	return false, false, true, nil
+}
+
+func (monitor *AmazonMonitor) AmazonCheckStockV2(client *http.Client, apiToken string) (bool, bool, bool, error) {
+	acceptheader := "application/vnd.com.amazon.api+json; type=\"collection(product/v2)/v1\"; expand=\"buyingOptions[].price(product.price/v1),productImages(product.product-images/v2)\""
+
+	req, err := http.NewRequest("GET", "https://data.amazon.com/api/marketplaces/ATVPDKIKX0DER/products/" + monitor.Sku, nil)
+	if err != nil {
+		return false, false, false, err
+	}
+
+	req.Header.Set("x-api-csrf-token", apiToken)
+	req.Header.Set("Accept", acceptheader)
+	req.Header.Set("User-Agent", monitor.UserAgent)
+	req.Header.Set("accept-language", "en-US,en;q=0.9")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, false, false, err
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	result := gjson.Get(string(body), "entities.0")
+
 
 	return false, false, true, nil
 }
