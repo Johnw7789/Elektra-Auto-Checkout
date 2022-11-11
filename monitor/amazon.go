@@ -105,7 +105,7 @@ func (monitor *AmazonMonitor) AmazonCheckStockV2(client *http.Client, apiToken s
 	}
 
 	body, _ := ioutil.ReadAll(resp.Body)
-	result := gjson.Get(string(body), "entities.0")
+	result := gjson.Get(string(body), "entities.0").String()
 
 	if strings.Contains(result, "amount") {
 		price := gjson.Get(result, "entity.buyingOptions.0.price.entity.priceToPay.moneyValueOrRange.value.amount").Float()
@@ -132,7 +132,7 @@ func (monitor *AmazonMonitor) GetApiToken(client *http.Client) (string, error) {
 
 	body, _ := ioutil.ReadAll(resp.Body)
 
-	tokenStr := Parse(string(body), `","aapiAjaxEndpoint":"data.amazon.com","csrfToken":"`, `"}</script>`)
+	tokenStr := ParseV2(string(body), `","aapiAjaxEndpoint":"data.amazon.com","csrfToken":"`, `"}</script>`)
 	tokenSplit := strings.Split(tokenStr, "\"}<")
 	apiToken := tokenSplit[0]
 	return apiToken, nil
