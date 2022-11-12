@@ -33,7 +33,7 @@ func (monitor *BestbuyMonitor) Cancel() {
 	//add exit code
 }
 
-func (monitor *BestbuyMonitor) bestbuyCheckStock(client *http.Client) (bool, bool, error) {
+func (monitor *BestbuyMonitor) BestbuyCheckStock(client *http.Client) (bool, bool, error) {
   	req, err := http.NewRequest("GET", "https://www.bestbuy.com/button-state/api/v5/button-state?skus=" + monitor.Sku + "&context=pdp&source=buttonView", nil)
 	if err != nil {
 		return false, false, nil
@@ -79,7 +79,7 @@ func (monitor *BestbuyMonitor) BestbuyMonitorTask() (bool, error) {
 	for monitor.Active {
 		monitor.logMessage("Checking stock")
 
-		isBanned, inStock, err := monitor.bestbuyCheckStock(client)
+		isBanned, inStock, err := monitor.BestbuyCheckStock(client)
 		if err != nil {
 			return isBanned, err
 		}
