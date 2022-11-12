@@ -109,7 +109,7 @@ func (monitor *AmazonMonitor) AmazonCheckStockV2(client *http.Client, apiToken s
 
 	if strings.Contains(result, "amount") {
 		price := gjson.Get(result, "entity.buyingOptions.0.price.entity.priceToPay.moneyValueOrRange.value.amount").Float()
-		if price <= monitor.Price {
+		if monitor.Price <= price {
 			//in stock because price shows up and is equal to or lower than limit
 			return true, false, false, nil
 		}
