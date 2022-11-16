@@ -12,8 +12,12 @@ import (
 	http "github.com/saucesteals/fhttp"
 	"github.com/saucesteals/mimic"
 	"golang.design/x/clipboard"
+	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
 )
 
+var (
+	latestVersion = mimic.MustGetLatestVersion(mimic.PlatformWindows)
+)
 
 type AmazonCheckout struct {
 	Id              	string
@@ -198,7 +202,7 @@ func (checkout *AmazonCheckout) AmazonAddToCartV1(client *http.Client) (bool, st
 	if strings.Contains(string(bodyText), "Place your order") {
 		log.Println("Generated Checkout")
 		doc := soup.HTMLParse(string(bodyText))
-		purchaseId := Parse(string(bodyText), "currentPurchaseId\":\"", "\",\"pipelineType\"")
+		purchaseId := elektra.Parse(string(bodyText), "currentPurchaseId\":\"", "\",\"pipelineType\"")
 		csrfToken := doc.Find("input", "name", "anti-csrftoken-a2z").Attrs()["value"]
 		return true, purchaseId, csrfToken, false, nil
 	} else {
