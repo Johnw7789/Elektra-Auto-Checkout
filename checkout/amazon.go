@@ -40,7 +40,7 @@ func (checkout *AmazonCheckout) logMessage(msg string) {
 
 func (checkout *AmazonCheckout) Cancel() {
 	checkout.Active = false
-	checkout.logMessage(fmt.Sprintf("[Task %s] Task canceled", checkout.Id))
+	checkout.logMessage(fmt.Sprintf("[Checkout %s] [Amazon] Checkout Canceled", checkout.Id))
 	//add exit code
 }
 
@@ -208,6 +208,9 @@ func (checkout *AmazonCheckout) AmazonAddToCartV1(client *http.Client) (bool, st
 
 
 func (checkout *AmazonCheckout) AmazonCheckoutTask() (bool, bool, error) {
+	checkout.Active = true
+	checkout.Id = uuid.New().String()
+	
 	m, _ := mimic.Chromium(mimic.BrandChrome, latestVersion)
 	
 	checkout.Mimicer = *m
