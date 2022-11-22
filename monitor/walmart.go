@@ -34,11 +34,11 @@ func getRequestHashSum(headersString string) []byte {
 }
 
 func signPkcs1(sortedHashString string) string {
-  hashSum := getRequestHashSum(sortedHashString)
+  	hashSum := getRequestHashSum(sortedHashString)
 	block, err := pem.Decode([]byte(privateKey))
-  if err != nil {
-    panic(err) 
-  }
+  	if err != nil {
+   		panic(err) 
+  	}
 
 	parsedKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
@@ -50,7 +50,7 @@ func signPkcs1(sortedHashString string) string {
 		panic(err)
 	}
   
-  signatureEnc := base64.StdEncoding.EncodeToString(signature)
+  	signatureEnc := base64.StdEncoding.EncodeToString(signature)
 	return signatureEnc
 }
 
@@ -68,7 +68,7 @@ func WalmartMonitorTask() {
 	}
 
 	timestamp := strconv.Itoa(int(time.Now().UnixMilli()))
-	var hashList HashList = HashList{
+	var headers WalmartHeaders = WalmartHeaders{
 		Id:          consumerId,
 		TimeStamp:   timestamp,
 		KeyVer:      "2",
@@ -76,7 +76,8 @@ func WalmartMonitorTask() {
 
 	sortedHashString := fmt.Sprintf("%s\n%s\n%s\n", hashList.Id, hashList.TimeStamp, hashList.KeyVer)
 
-	signatureEnc := signPkcs1(sortedHashString)
+	headers.SignatureEnc = signPkcs1(sortedHashString)
+	
 
 	req.Header.Set("WM_CONSUMER.ID", hashList.Id)
 	req.Header.Set("WM_CONSUMER.INTIMESTAMP", hashList.TimeStamp)
