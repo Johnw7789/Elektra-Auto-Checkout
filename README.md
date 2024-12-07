@@ -14,11 +14,10 @@ This project is not intended for resellers. This is a project for educational pu
 
 Use ``go mod tidy`` if issues arise with some of Elektra's imported modules.
 
-## Getting Started
-Below is example usage of the Amazon, Bestbuy, and Newegg modules. You can find examples in the [examples](https://github.com/Johnw7789/Elektra-Auto-Checkout/tree/main/examples) folder.
-
-## Checking stock
+## Getting started
 Please specify the ```Delay``` in milliseconds. The primary method of receiving stock status is done through a Go channel. If there are a number of errors that exceed the limit, the process will be cancelled and the channel will send back false for the stock status. The err can be read as long as it is done so in its own go routine. That is to say, the monitor task should be fired in a goroutine so that the alert channel can be waited for outside of it. If an err is returned then it can be read in the previous goroutine. 
+
+Below is example usage of the Amazon, Bestbuy, and Newegg modules. You can find examples in the [examples](https://github.com/Johnw7789/Elektra-Auto-Checkout/tree/main/examples) folder.
 
 ### Amazon
 ```go
