@@ -1,29 +1,14 @@
 # Elektra
 ## About This Project
-Elektra is designed to automate the process of inventory checking, purchasing items, and generating account login sessions for various commercial and retail sites.
+Elektra is designed to automate the process of inventory checking, and in the case of certain sites, automated checkout.
 
-Amazon is the first of many sites to come. Expect weekly additions, though some sites may only receive login and monitor modules and not full fledged checkout.
+Elektra does not use any automated browser, all automation is executed through the use of unofficial, public facing APIs.
 
 ## Note
 This project is not intended for resellers. This is a project for educational purposes / experimentation / to help others get an item which they may need.
 
-## Progress / Roadmap
-
-| **Site** | **Login** | **Monitor** | **Checkout** |
-|:---:|:---:|:---:|:---:|
-| amazon.com |:hammer:	|`✔`|`✔`|
-| bestbuy.com |`✔`|`✔`|:hammer:	|
-| newegg.com ||`✔`| |
-| evga.com ||||
-| target.com ||:hammer:	||
-| walmart.com ||:hammer:	||
-
-* Add notifications module (Discord, Slack, Twilio)
-* ~~Add auth code fetcher (imap + Gmail)~~ - Complete
-* Add account generators
-
 ## Installation
-``go get github.com/ffeathers/Elektra-Auto-Checkout``
+``go get github.com/Johnw7789/Elektra-Auto-Checkout``
 
 Use ``go mod tidy`` if issues arise with some of Elektra's imported modules.
 
