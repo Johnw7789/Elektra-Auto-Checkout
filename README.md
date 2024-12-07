@@ -1,6 +1,8 @@
 # Elektra
 ## About This Project
-Elektra is designed to automate the process of inventory checking, and in the case of certain sites, automated checkout.
+Note: Checkout modules and Bestbuy login are now deprecated. Bestbuy login can be made to work by solving the x-grid and x-grid-b encrypted headers. I may update with this functionality in the future but do not have the time currently. 
+
+Elektra is designed to automate the process of inventory checking ~~~~and in the case of certain sites, login and automated checkout~~~~.
 
 Elektra does not use any automated browser, all automation is executed through the use of unofficial, public facing APIs.
 
@@ -13,72 +15,75 @@ This project is not intended for resellers. This is a project for educational pu
 Use ``go mod tidy`` if issues arise with some of Elektra's imported modules.
 
 ## Getting Started
-Below is some example usage of the Amazon module. You can find additional examples for other sites in the [examples](https://github.com/ffeathers/Elektra-Auto-Checkout/tree/main/examples) folder.
+Below is example usage of the Amazon, Bestbuy, and Newegg modules. You can find examples in the [examples](https://github.com/Johnw7789/Elektra-Auto-Checkout/tree/main/examples) folder.
 
 ###### Checking stock
-If ``UserAgent`` is left empty, a user-agent will be automatically generated for you. ``PollingInterval`` is the delay in seconds for which a monitor will sleep after every stock check. Once a monitor task is started, it will continue to monitor indefinitely until stock is detected, then it will return.
+Please specify the ```Delay``` in milliseconds. The primary method of receiving stock status is done through a Go channel. If there are a number of errors that exceed the limit, the process will be cancelled and the channel will send back false for the stock status. The err can be read as long as it is done so in its own go routine. That is to say, the monitor task should be fired in a goroutine so that the alert channel can be waited for outside of it. If an err is returned then it can be read in the previous goroutine. 
 
-```  
-amazonMonitor := monitor.AmazonMonitor{
-	UserAgent: "",
-	Proxy: "",
-	PollingInterval: 3,
-	Sku: "B071JM699B",
-	OfferId: "LZebGP88NFs8Z%2FIj3CvZbjHdwX3RuBgxIfIGVsci0BxW1ljfm2Bj7qmB%2FcNV1EmoxTfrm2at4Pt9Nle8IzIfAw%2FphnSjfj%2FERfaI5MbAIN8WWdLGE%2BT%2BXmsUi5es2D8IO56uulqRgEKzWom1U1Xjsg%3D%3D",
+### Amazon
+```go
+opts := monitor.MonitorOpts{
+	Sku:     "B071JM699B", // * ASIN, or the sku of the amazon product
+	Delay:   3000, // * Delay of 3 seconds
+	Proxy:   "", 
+	Logging: true,
 }
 
-var wg sync.WaitGroup
-wg.Add(1)
+monitor, err := monitor.NewMonitorClient(opts)
+if err != nil {
+	log.Fatal(err)
+}
+
+// * A price limit must be set as it will be checked to determine if the product is in stock and sold by the correct merchant
+priceLimit := 6.17 
 
 go func() {
-	banned, err := amazonMonitor.AmazonMonitorTask()
+	// * Optional if wanting to read a potential error, should otherwise just fire like this: go monitor.AmazonTask(priceLimit)
+	err := monitor.AmazonTask(priceLimit)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	if banned {
-		log.Println("Your IP was flagged")
-	} else {
-		// in stock, do stuff
-	}
-	
-	wg.Done()
-	// all done
 }()
 
-time.Sleep(5 * time.Second)
-amazonMonitor.Cancel()
-// terminates the monitor task after 5 seconds
-
-wg.Wait()
+// * Wait for in stock
+inStock := <-monitor.AlertChannel
 ```
-###### Starting a checkout instance
-Account ``Cookies`` are needed in order to complete a checkout. You can use cookies from your browser or you can create a session using the Amazon login module (not yet implemented).``RetryDelay`` is the amount of time that a checkout task will sleep if there is an error in the checkout flow, before restarting. ``MaxRetries`` is the maximum amount of checkout attempts a checkout task will make before it returns. If the return value is false, the task was unable to complete a successful checkout after every attempt made. If it is true, then the checkout was succesful and ``OrderNum`` should now be populated with the order number. 
 
-If you would like to use your local IP, you can exclude the Proxy param or leave it as an empty string. 
-
-```
-amazonCheckout := checkout.AmazonCheckout{
-  UserAgent: "",
-  Proxy: "",
-  Cookies: "exampleCookie=exampleValue",
-  MaxRetries: 5,
-  RetryDelay: 3,
-  Sku: "ASIN",
-  OfferId: "OfferId",
+### Bestbuy
+```go
+opts := monitor.MonitorOpts{
+	Sku:     "6473498",
+	Delay:   3000,
+	Proxy:   "", 
+	Logging: true,
 }
-  
-orderSuccess, isBanned, err := amazonCheckout.AmazonCheckoutTask() 
+
+monitor, err := monitor.NewMonitorClient(opts)
 if err != nil {
-  log.Fatal(err)
+	log.Fatal(err)
 }
 
-if isBanned {
-  //ip banned
-} else if orderSuccess {
-  log.Println("Checkout successful | order number: " + amazonCheckout.OrderNum)
-}
+go monitor.BestbuyTask()
+
+inStock := <-monitor.AlertChannel
 ```
 
-## License
-[MIT](https://choosealicense.com/licenses/mit)
+### Newegg
+```go
+opts := monitor.MonitorOpts{
+	Sku:     "N82E16824012083",
+	Delay:   3000,
+	Proxy:    "",
+	Logging: true,
+}
+
+monitor, err := monitor.NewMonitorClient(opts)
+if err != nil {
+	log.Fatal(err)
+}
+
+go monitor.NeweggTask()
+
+inStock := <-monitor.AlertChannel
+```
+
