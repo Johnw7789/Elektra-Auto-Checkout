@@ -2,7 +2,7 @@
 ## About This Project
 Note: Checkout modules and Bestbuy login are now deprecated. Bestbuy login can be made to work by solving the x-grid and x-grid-b encrypted headers. I may update with this functionality in the future but do not have the time currently. 
 
-Elektra is designed to automate the process of inventory checking ~~~~and in the case of certain sites, login and automated checkout~~~~.
+Elektra is designed to automate the process of inventory checking ~~and in the case of certain sites, login and automated checkout~~.
 
 Elektra does not use any automated browser, all automation is executed through the use of unofficial, public facing APIs.
 
