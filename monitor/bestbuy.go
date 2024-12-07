@@ -1,95 +1,83 @@
 package monitor
 
 import (
-	"fmt"
-	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
-	"github.com/google/uuid"
-	ua "github.com/wux1an/fake-useragent"
-	"io/ioutil"
-	"log"
-	"net/http"
+	"errors"
+	"io"
 	"strings"
 	"time"
+
+	http "github.com/bogdanfinn/fhttp"
 )
 
-type BestbuyMonitor struct {
-	Id		string
-	UserAgent       string
-	Proxy           string
-	PollingInterval int
-	Sku             string
-	LoggingDisabled bool
-	Active		bool
-}
-func (monitor *BestbuyMonitor) logMessage(msg string) {
-	if !monitor.LoggingDisabled {
-		log.Println(fmt.Sprintf("[Task %s] [BestBuy] %s", monitor.Id, msg))
+// * BestbuyTask continuously checks stock until the cancel channel is triggered
+func (m *MonitorClient) BestbuyTask() error {
+	errCount := 5
+
+	for {
+		select {
+		case <-m.cancelChannel:
+			return nil
+		default:
+			m.logMessage("Bestbuy", "Checking stock")
+			inStock, err := m.getBestbuyStock()
+			if err != nil && errCount > 5 {
+				return err
+			}
+
+			if inStock {
+				m.logMessage("Bestbuy", "In stock")
+				m.AlertChannel <- true
+				return nil
+			} else {
+				m.logMessage("Bestbuy", "Out of stock")
+			}
+
+			time.Sleep(time.Millisecond * time.Duration(m.opts.Delay))
+		}
 	}
 }
 
-func (monitor *BestbuyMonitor) Cancel() {
-	monitor.Active = false
-	monitor.logMessage("Task canceled")
-	//add exit code
-}
-
-func (monitor *BestbuyMonitor) BestbuyCheckStock(client *http.Client) (bool, bool, error) {
-  	req, err := http.NewRequest("GET", "https://www.bestbuy.com/button-state/api/v5/button-state?skus=" + monitor.Sku + "&context=pdp&source=buttonView", nil)
+func (m *MonitorClient) getBestbuyStock() (bool, error) {
+	body, err := m.reqBestbuyStock()
 	if err != nil {
-		return false, false, nil
+		return false, err
 	}
+
+	// * ADD_TO_CART is the only 100% reliable indicator of stock, but CHECK_STORES is probably still worth including as it means at least 1 store has stock somewhere
+	if strings.Contains(string(body), "CHECK_STORES") || strings.Contains(string(body), "ADD_TO_CART") {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (m *MonitorClient) reqBestbuyStock() (string, error) {
+	req, err := http.NewRequest("GET", BestbuyBaseUrl+m.opts.Sku, nil)
+	if err != nil {
+		return "", nil
+	}
+
 	req.Header.Set("authority", "www.bestbuy.com")
 	req.Header.Set("host", "www.bestbuy.com")
-	req.Header.Set("user-agent", monitor.UserAgent)
 	req.Header.Set("accept", "*/*")
 	req.Header.Set("x-client-id", "FRV")
 	req.Header.Set("Connection", "keep-alive")
 
-	resp, err := client.Do(req)
+	req.Header = m.defaultHeaders(req.Header.Clone())
+
+	resp, err := m.HttpClient.Do(req)
 	if err != nil {
-		return false, false, nil
+		return "", nil
 	}
-  
-	if resp.StatusCode == 200 {
-    		body, _ := ioutil.ReadAll(resp.Body)
-    		if strings.Contains(string(body), "CHECK_STORES") || strings.Contains(string(body), "ADD_TO_CART") {
-      			return false, true, nil
-		}
-  	} else {
-   		 monitor.logMessage("Status: " + resp.Status)
-   		 return true, false, nil
-  	}
-  
-  	return false, false, nil
-}
 
-func (monitor *BestbuyMonitor) BestbuyMonitorTask() (bool, error) {
-	monitor.Active = true
-	monitor.Id = uuid.New().String()
+	if resp.StatusCode != 200 {
+		return "", errors.New("non 200 status code: " + resp.Status)
+	}
 
-	client, err := elektra.CreateClient(monitor.Proxy)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return false, err
-	}
- 
-	if monitor.UserAgent == "" {
-		monitor.UserAgent = ua.RandomType(ua.Desktop)
-	}
-  
-	for monitor.Active {
-		monitor.logMessage("Checking stock")
-
-		isBanned, inStock, err := monitor.BestbuyCheckStock(client)
-		if err != nil {
-			return isBanned, err
-		}
-
-		if inStock {
-			return isBanned, nil
-		}
-
-		time.Sleep(time.Second * time.Duration(monitor.PollingInterval))
+		return "", err
 	}
 
-	return false, nil
+	return string(bodyBytes), nil
 }

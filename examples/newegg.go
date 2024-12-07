@@ -1,21 +1,27 @@
 package examples
 
 import (
-	"fmt"
-	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
-	"github.com/ffeathers/Elektra-Auto-Checkout/monitor"
 	"log"
+
+	"github.com/Johnw7789/Elektra-Auto-Checkout/monitor"
 )
 
-func main() {
-	monitorData := elektra.NeweggMonitorData{
-		UserAgent:       "",
-		UseProxies:      false,
-		PollingInterval: 3,
-		Sku:             "N82E16835181166",
+func TestNeweggMonitor() {
+	opts := monitor.MonitorOpts{
+		Sku:     "N82E16824012083",
+		Delay:   3000,
+		Proxy:    "http://localhost:8888", // * Sniff using local proxy
+		Logging: true,
 	}
 
-	monitor.NeweggMonitorTask(&monitorData)
+	monitor, err := monitor.NewMonitorClient(opts)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	log.Println(fmt.Sprintf("SKU %s: In Stock", monitorData.Sku))
+	go monitor.NeweggTask()
+
+	inStock := <-monitor.AlertChannel
+
+	log.Println("In stock:", inStock)
 }

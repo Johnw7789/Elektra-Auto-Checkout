@@ -1,28 +1,53 @@
 package examples
 
 import (
-	"fmt"
-	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
-	"github.com/ffeathers/Elektra-Auto-Checkout/monitor"
 	"log"
+
+	"github.com/Johnw7789/Elektra-Auto-Checkout/login"
+	"github.com/Johnw7789/Elektra-Auto-Checkout/monitor"
 )
 
-func main() {
-	monitor := monitor.BestbuyMonitor{
-		UserAgent:       "",
-		Proxy:           "",
-		PollingInterval: 3,
-		Sku:             "5457800",
+func TestBestbuyMonitor() {
+	opts := monitor.MonitorOpts{
+		Sku:     "6473498",
+		Delay:   3000,
+		Proxy:   "http://localhost:8888", // * Sniff using local proxy
+		Logging: true,
 	}
 
-	banned, err := monitor.BestbuyMonitorTask()
+	monitor, err := monitor.NewMonitorClient(opts)
 	if err != nil {
 		log.Fatal(err)
 	}
-	
-	if banned {
-		log.Println(fmt.Sprintf("Your IP is flagged", monitor.Sku))
-	} else {
-		log.Println(fmt.Sprintf("SKU %s: In Stock", monitor.Sku))
+
+	go monitor.BestbuyTask()
+
+	inStock := <-monitor.AlertChannel
+
+	log.Println("In stock:", inStock)
+}
+
+// * Deprecated
+func TestBestbuyLogin() {
+	opts := login.LoginOpts{
+		Email:    "",
+		Password: "",
+		Proxy:    "http://localhost:8888", // * Sniff using local proxy
+		Logging:  true,
 	}
+
+	lc, err := login.NewLoginClient(opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	success, err := lc.BestbuyTask()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Login success:", success)
+
+	cookies := lc.GetCookieStr()
+	log.Println("Cookies:", cookies)
 }

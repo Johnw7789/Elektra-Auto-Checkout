@@ -1,55 +1,29 @@
 package examples
 
 import (
-	"fmt"
-	"github.com/ffeathers/Elektra-Auto-Checkout/elektra"
-	"github.com/ffeathers/Elektra-Auto-Checkout/monitor"
 	"log"
+
+	"github.com/Johnw7789/Elektra-Auto-Checkout/monitor"
 )
 
-func main() {
-	cookieString := ""
-	sku := "B0873C4C67"
-	offerId := "5%2BU3RbI4MrLxJP1riew3ktYPNAEuKmceCPF1BTaKdwF9bGnxPX3cfIChUFRKBusiTPTd3gJEB9Az0V3TlZw0po6Mob%2BYvq37tir2AWHORVYNxN9kBTPxMuvTkuiELMuz3q9BWdzZKsylbBhRmq7cAHQgq7p9VSdR5e6J%2BWxORLR95D2He%2BodtT4wtctu24wt"
-		
-	amazonMonitor := monitor.AmazonMonitor{
-		UserAgent: "",
-		Proxy: "",
-		PollingInterval: 3,
-		Sku: sku,
-		OfferId: offerId,
+func TestAmazonMonitor() {
+	opts := monitor.MonitorOpts{
+		Sku:   "B071JM699B",
+		Delay: 3000,
+		Proxy:    "http://localhost:8888", // * Sniff using local proxy
+		Logging: true,
 	}
 
-	banned, err := amazonMonitor.AmazonMonitorTask()
+	monitor, err := monitor.NewMonitorClient(opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if banned {
-		log.Println("Your IP was flagged")
-	} else {
-		log.Println(fmt.Sprintf("SKU %s: In Stock, Initiating Checkout", amazonMonitor.Sku))
-		
-			
-		amazonCheckout := checkout.AmazonCheckout{
-		  UserAgent: "",
-		  Proxy: "",
-		  Cookies: "exampleCookie=exampleValue",
-		  MaxRetries: 5,
-		  RetryDelay: 3,
-		  Sku: sku,
-		  OfferId: offerId,
-		}
+	priceLimit := 6.17
 
-		orderSuccess, isBanned, err := amazonCheckout.AmazonCheckoutTask() 
-		if err != nil {
-		  log.Fatal(err)
-		}
+	go monitor.AmazonTask(priceLimit)
 
-		if isBanned {
-		  //ip banned
-		} else if orderSuccess {
-		  log.Println("Checkout successful | order number: " + amazonCheckout.OrderNum)
-		}
-	}
+	inStock := <-monitor.AlertChannel
+
+	log.Println("In stock:", inStock)
 }
